@@ -1,0 +1,14 @@
+seed: 42
+device: cuda
+data:
+  paths:
+#    - 'data/amazon-1km/DTCB_acumul_area.npz'
+    - 'data/amazon-1km/DTCB_area.npz'
+#    - 'data/amazon-1km/DTCB_count_areas.npz'
+#    - 'data/amazon-1km/DTCB_diff_area.npz'
+#    - 'data/amazon-1km/DTCB_seasonality_factor.npz'
+  val_ratio: 0.2
+training:
+  batch_size: 32
+  epochs: 20
+  lr: 0.001 
