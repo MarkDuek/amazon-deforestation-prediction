@@ -30,7 +30,7 @@ def plot_active_pixels(
 
     # Aplicar zoom/crop se solicitado
     if zoom is not None:
-        ymin, ymax, xmin, xmax = zoom
+        ymin, ymax, xmin, xmax = [int(z) for z in zoom]
         frame = frame[ymin:ymax, xmin:xmax]
 
     # Preparar colormap: zeros ficam pretos
