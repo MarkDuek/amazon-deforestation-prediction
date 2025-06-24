@@ -1,3 +1,4 @@
+import logging
 import argparse
 import yaml
 import torch
@@ -22,19 +23,28 @@ def load_config(path):
 
 
 def main():
-
+    # define logger
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    # parse args
     args = parse_args()
     config = load_config(args.config)
 
+    # get config variables
     device = get_device(config["device"])
     val_ratio = config["data"]["val_ratio"]
     paths = config["data"]["paths"]
+    time_slice = config["data"]["time_slice"]
 
-    print(paths)
+    # load dataset
+    amazon_dataset = AmazonDataset(paths, time_slice)
+    logger.info(f"Dataset sample shape: {amazon_dataset[0].shape}")
 
-    amazon_dataset = AmazonDataset(paths)
+    # split dataset
     train_data, val_data = random_split(amazon_dataset, [(1 - val_ratio), val_ratio])
 
+    # create dataloaders
     train_loader = DataLoader(
         train_data,
         batch_size=config["training"]["batch_size"],
@@ -48,9 +58,13 @@ def main():
         num_workers=4,
     )
 
-    # model = Model()
+    # TODO: define model
 
+    # model = Model()
     # optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["learning_rate"])
+
+    # TODO:
+    # trainer = Trainer(config)
 
 
 if __name__ == "__main__":
