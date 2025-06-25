@@ -29,10 +29,10 @@ class AmazonDataset(Dataset):
 
     def __getitem__(
         self,
-        idx: int
+        time_idx: int
     ) -> torch.Tensor:
-        self.logger.info(f"Getting item at index: {idx}")
-        time_slice_data = self.get_time_slice(idx, self.time_slice)
+        self.logger.info(f"Getting item at index: {time_idx}")
+        time_slice_data = self.get_time_slice(time_idx, self.time_slice)
         time_slice_data = self.concatenate_sparse_matrix(time_slice_data)
         
         return torch.tensor(time_slice_data)
