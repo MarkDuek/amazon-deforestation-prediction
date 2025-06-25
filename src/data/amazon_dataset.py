@@ -1,13 +1,20 @@
 import logging
 import numpy as np
 import torch
+
 from torch.utils.data import Dataset
-from typing import Any, Mapping, List
+from typing import Any, Mapping, List, Optional
+from typing_extensions import Callable
 
 
 class AmazonDataset(Dataset):
 
-    def __init__(self, data_paths, time_slice, transform=None):
+    def __init__(
+        self,
+        data_paths: List[str],
+        time_slice: int,
+        transform: Optional[Callable] = None
+    ):
         self.logger = logging.getLogger(__name__)
         paths_str = '\n'.join([f"  - {path}" for path in data_paths])
         self.logger.info(f"Initializing AmazonDataset with data paths:\n{paths_str}")
@@ -17,21 +24,29 @@ class AmazonDataset(Dataset):
         self.time_slice = time_slice
         self.total_time_steps = len(self.data[0].keys())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.total_time_steps - self.time_slice + 1
 
-    def __getitem__(self, idx: int):
+    def __getitem__(
+        self,
+        idx: int
+    ) -> torch.Tensor:
         self.logger.info(f"Getting item at index: {idx}")
         time_slice_data = self.get_time_slice(idx, self.time_slice)
         time_slice_data = self.concatenate_sparse_matrix(time_slice_data)
         
         return torch.tensor(time_slice_data)
     
-    def get_time_slice(self, start_idx: int, time_slice: int):
-        file_channels = []
+    def get_time_slice(
+        self,
+        start_idx: int,
+        time_slice: int,
+    ) -> List[Mapping[str, Any]]:
+
+        file_channels: List[Mapping[str, Any]] = []
         
         for file_data in self.data:
-            subset_data = {}
+            subset_data: Mapping[str, Any] = {}
             for i, time_step in enumerate(range(start_idx, start_idx + time_slice)):
                 subset_data[f"arr_{i}"] = file_data[f"arr_{time_step}"]
             
