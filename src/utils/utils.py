@@ -12,7 +12,7 @@ def get_device(device_str: str = "cpu") -> torch.device:
     else:
         return torch.device("cpu")
 
-def parse_args() -> argparse.Namespace:
+def parse_args(args=None) -> argparse.Namespace:
     """
     Parses command line arguments.
     """
@@ -20,7 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config", type=str, default="config.yaml", help="Path to config file"
     )
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def load_config(path: str) -> dict:
