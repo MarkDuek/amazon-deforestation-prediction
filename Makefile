@@ -15,8 +15,8 @@ check:
 	@echo Good to Go!
 
 test:
-	@pytest --cov job
+	@pytest --cov src tests/
 
 test-cov:
-	@pytest --cov job --cov-report xml:coverage.xml
+	@pytest --cov src tests/ --cov-report xml:coverage.xml
 .PHONY: docs
