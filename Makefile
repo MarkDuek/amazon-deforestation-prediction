@@ -15,7 +15,7 @@ check:
 	@echo Good to Go!
 
 test:
-	@pytest --cov src tests/
+	@pytest --cov-report=term-missing --cov=src tests/
 
 test-cov:
 	@pytest --cov src tests/ --cov-report xml:coverage.xml
