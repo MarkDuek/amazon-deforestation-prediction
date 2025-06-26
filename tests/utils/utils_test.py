@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.utils.utils import get_device
+from src.utils.utils import get_device, parse_args, load_config
 
 def test_get_device(device):
     """Test get_device function with different device inputs."""
@@ -21,3 +21,13 @@ def test_get_device_default():
     """Test default behavior (should return CPU)."""
     result = get_device()
     assert result == torch.device('cpu')
+
+def test_parse_args():
+    """Test parse_args function."""
+    args = parse_args(["--config", "config.yaml"]) 
+    assert args.config == "config.yaml"
+
+def test_load_config():
+    """Test load_config function."""
+    config = load_config("config.yaml")
+    assert config is not None
