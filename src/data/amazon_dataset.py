@@ -39,7 +39,7 @@ class AmazonDataset(Dataset):
     
     def get_time_slice(
         self,
-        start_idx: int,
+        time_idx: int,
         time_slice: int,
     ) -> List[Mapping[str, Any]]:
 
@@ -47,8 +47,12 @@ class AmazonDataset(Dataset):
         
         for file_data in self.data:
             subset_data: Mapping[str, Any] = {}
-            for i, time_step in enumerate(range(start_idx, start_idx + time_slice)):
-                subset_data[f"arr_{i}"] = file_data[f"arr_{time_step}"]
+            for i, time_step in enumerate(range(time_idx, time_idx + time_slice)):
+                key = f"arr_{time_step}"
+                if key in file_data:
+                    subset_data[f"arr_{i}"] = file_data[key]
+                else:
+                    self.logger.warning(f"Key '{key}' not found in file data")
             
             file_channels.append(subset_data)
         
