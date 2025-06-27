@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 from torch.utils.data import Dataset
-from typing import Any, Mapping, List, Optional
+from typing import Any, Mapping, List, Optional, Tuple
 from typing_extensions import Callable
 
 
@@ -30,12 +30,15 @@ class AmazonDataset(Dataset):
     def __getitem__(
         self,
         time_idx: int
-    ) -> torch.Tensor:
-        self.logger.info(f"Getting item at index: {time_idx}")
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self.logger.debug(f"Getting item at index: {time_idx}")
         time_slice_data = self.get_time_slice(time_idx, self.time_slice)
         time_slice_data = self.concatenate_sparse_matrix(time_slice_data)
         
-        return torch.tensor(time_slice_data)
+        input_data = torch.tensor(time_slice_data)  # (C, T, H, W)
+        target = torch.tensor(time_slice_data[0, -1, :, :])  # (H, W) - last time step of first channel
+        
+        return input_data, target
     
     def get_time_slice(
         self,
