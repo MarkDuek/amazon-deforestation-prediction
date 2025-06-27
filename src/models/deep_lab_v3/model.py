@@ -3,9 +3,10 @@ import torch.nn as nn
 import einops
 import logging
 import segmentation_models_pytorch as smp
+from typing import Dict, Any
 
 class DeepLabV3(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config["model"]["deep_lab_v3"]
         self.time_slice = config["data"]["time_slice"]
         self.logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ class DeepLabV3(nn.Module):
         self.head = nn.Conv3d(1, 1, kernel_size=(self.time_slice, 1, 1))  # (B, 1, T, H, W) -> (B, 1, 1, H, W)
 
         
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         self.logger.debug(f"Model received tensor with shape: {x.shape}")
         
         if len(x.shape) == 4:
