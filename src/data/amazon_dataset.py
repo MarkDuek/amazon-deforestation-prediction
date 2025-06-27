@@ -54,10 +54,15 @@ class AmazonDataset(Dataset):
         time_slice_data = self.get_time_slice(time_idx, self.time_slice)
         concatenated_data = self.concatenate_sparse_matrix(time_slice_data)
 
-        input_data = torch.tensor(concatenated_data)  # (C, T, H, W)
-        target = torch.tensor(
-            concatenated_data[0, -1, :, :]
-        )  # (H, W) - last time step of first channel
+        # (C, T-1, H, W) - first T-1 time slices
+        input_data = torch.tensor(concatenated_data[:, :-1, :, :])
+        # (1, 1, H, W) - last time step of second channel
+        target = (
+            torch.tensor(concatenated_data[1, -1, :, :])
+            .unsqueeze(0)
+            .unsqueeze(0)
+        )
+
         input_data = self.pad_to_multiple(
             input_data, self.config["padding_multiple"]
         )
