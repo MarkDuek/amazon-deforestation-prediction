@@ -1,7 +1,6 @@
 import logging
 from typing import Any, Dict, List
 
-import einops
 import segmentation_models_pytorch as smp  # type: ignore[import-untyped]
 import torch
 import torch.nn as nn

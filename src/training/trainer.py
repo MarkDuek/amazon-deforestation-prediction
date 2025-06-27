@@ -1,11 +1,10 @@
 import logging
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import torch
 
 from src.training.early_stopping import EarlyStopping
-from src.utils.utils import load_config
 
 
 class Trainer:
@@ -17,7 +16,7 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         loss_fn: torch.nn.Module,
         device: torch.device,
-        config: dict,
+        config: Dict[str, Any],
     ):
         self.logger = logging.getLogger(__name__)
         self.config = config
@@ -30,13 +29,13 @@ class Trainer:
 
     def train(
         self,
-    ):
-        epochs = self.config["training"]["epochs"]
+    ) -> Tuple[torch.nn.Module, List[float], List[float]]:
+        epochs: int = self.config["training"]["epochs"]
         train_losses: List[float] = []
         val_losses: List[float] = []
         avg_train_loss: List[float] = []
         avg_val_loss: List[float] = []
-        early_stopping = EarlyStopping(
+        early_stopping: EarlyStopping = EarlyStopping(
             patience=self.config["early_stopping"]["patience"],
             delta=self.config["early_stopping"]["delta"],
             path=self.config["early_stopping"]["path"],
@@ -56,15 +55,17 @@ class Trainer:
                 # zero gradients
                 self.optimizer.zero_grad()
                 # forward pass
-                output = self.model(data)
+                train_output: torch.Tensor = self.model(data)
                 # compute loss
-                loss = self.loss_fn(output, target)
+                train_loss_tensor: torch.Tensor = self.loss_fn(
+                    train_output, target
+                )
                 # backward pass
-                loss.backward()
+                train_loss_tensor.backward()
                 # update weights
                 self.optimizer.step()
                 # update training losses
-                train_losses.append(loss.item())
+                train_losses.append(train_loss_tensor.item())
 
             # validation phase
             self.model.eval()
@@ -73,15 +74,17 @@ class Trainer:
                 data, target = data.to(self.device), target.to(self.device)
 
                 # forward pass
-                output = self.model(data)
+                val_output: torch.Tensor = self.model(data)
                 # compute loss
-                loss = self.loss_fn(output, target)
+                val_loss_tensor: torch.Tensor = self.loss_fn(
+                    val_output, target
+                )
                 # update validation losses
-                val_losses.append(loss.item())
+                val_losses.append(val_loss_tensor.item())
 
             # compute average losses
-            train_loss = np.average(train_losses)
-            val_loss = np.average(val_losses)
+            train_loss: float = float(np.average(train_losses))
+            val_loss: float = float(np.average(val_losses))
             avg_train_loss.append(train_loss)
             avg_val_loss.append(val_loss)
 
@@ -102,7 +105,7 @@ class Trainer:
     def evaluate(
         self,
         loader: torch.utils.data.DataLoader,
-    ):
+    ) -> None:
 
         # return avg_loss, accuracy
         return

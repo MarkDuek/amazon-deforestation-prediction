@@ -27,7 +27,9 @@ def main():
     logger.info(f"Dataset sample shape: {amazon_dataset[0][0].shape}")
 
     # split dataset
-    train_data, val_data = random_split(amazon_dataset, [(1 - val_ratio), val_ratio])
+    train_data, val_data = random_split(
+        amazon_dataset, [(1 - val_ratio), val_ratio]
+    )
 
     # create dataloaders
     logger.info(f"Creating train loader")

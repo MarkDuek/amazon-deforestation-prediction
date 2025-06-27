@@ -44,6 +44,7 @@ class EarlyStopping:
     def save_checkpoint(self, val_loss, model):
         if self.verbose:
             self.trace_func(
-                f"Validation loss decreased ({self.best_loss:.6f} --> {val_loss:.6f}).  Saving model..."
+                f"Validation loss decreased ({self.best_loss:.6f} --> "
+                f"{val_loss:.6f}).  Saving model..."
             )
         torch.save(model.state_dict(), self.path)

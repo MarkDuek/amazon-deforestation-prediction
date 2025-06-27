@@ -25,5 +25,8 @@ def plot_active_pixels(
     plt.figure(figsize=(8, 8))
     plt.imshow(img, cmap=cmap, vmin=1e-6, vmax=vmax, interpolation="nearest")
     plt.axis("off")
-    plt.title(f"Frame {frame_idx}" + (f" (zoom {zoom})" if zoom else ""), color="white")
+    plt.title(
+        f"Frame {frame_idx}" + (f" (zoom {zoom})" if zoom else ""),
+        color="white",
+    )
     plt.show()

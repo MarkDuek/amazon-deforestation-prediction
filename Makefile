@@ -9,9 +9,9 @@ prepare:
 check:
 	@black .
 	@isort .
-	@mypy job
-	@flake8 job
-	@pylint job
+	@mypy src
+	@flake8 src
+	@pylint src
 	@echo Good to Go!
 
 test:

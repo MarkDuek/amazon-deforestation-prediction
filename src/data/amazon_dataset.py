@@ -20,7 +20,9 @@ class AmazonDataset(Dataset):
 
         self.logger = logging.getLogger(__name__)
         paths_str = "\n".join([f"  - {path}" for path in self.data_paths])
-        self.logger.info(f"Initializing AmazonDataset with data paths:\n{paths_str}")
+        self.logger.info(
+            f"Initializing AmazonDataset with data paths:\n{paths_str}"
+        )
 
         self.data = self.load_npz_files(self.data_paths)
 
@@ -40,10 +42,12 @@ class AmazonDataset(Dataset):
         target = torch.tensor(
             concatenated_data[0, -1, :, :]
         )  # (H, W) - last time step of first channel
-        input_data = self.pad_to_multiple(input_data, self.config["padding_multiple"])
+        input_data = self.pad_to_multiple(
+            input_data, self.config["padding_multiple"]
+        )
         target = self.pad_to_multiple(target, self.config["padding_multiple"])
 
-        ## TODO: Add transform
+        # TODO: Add transform
 
         return input_data, target
 
@@ -57,7 +61,9 @@ class AmazonDataset(Dataset):
 
         for file_data in self.data:
             subset_data: Dict[str, Any] = {}
-            for i, time_step in enumerate(range(time_idx, time_idx + time_slice)):
+            for i, time_step in enumerate(
+                range(time_idx, time_idx + time_slice)
+            ):
                 key = f"arr_{time_step}"
                 if key in file_data:
                     subset_data[f"arr_{i}"] = file_data[key]
@@ -99,12 +105,15 @@ class AmazonDataset(Dataset):
     ) -> np.ndarray:
 
         arrays: List[np.ndarray] = [
-            self.stack_sparse_matrix(data, d_type=np.float32) for data in data_list
+            self.stack_sparse_matrix(data, d_type=np.float32)
+            for data in data_list
         ]
 
         return np.stack(arrays)
 
-    def pad_to_multiple(self, tensor: torch.Tensor, multiple: int) -> torch.Tensor:
+    def pad_to_multiple(
+        self, tensor: torch.Tensor, multiple: int
+    ) -> torch.Tensor:
         self.logger.debug(
             f"Padding tensor with shape {tensor.shape} to multiple {multiple}"
         )
@@ -115,7 +124,12 @@ class AmazonDataset(Dataset):
         self.logger.debug(f"Target shape: {target_h}x{target_w}")
 
         pad_h, pad_w = target_h - h, target_w - w
-        padding = (pad_w // 2, pad_w - pad_w // 2, pad_h // 2, pad_h - pad_h // 2)
+        padding = (
+            pad_w // 2,
+            pad_w - pad_w // 2,
+            pad_h // 2,
+            pad_h - pad_h // 2,
+        )
         self.logger.debug(f"Padding: {padding}")
 
         return F.pad(tensor, padding, mode="constant", value=0.0)
