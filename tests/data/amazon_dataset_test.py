@@ -55,7 +55,7 @@ def test_get_item(npz_file, time_idx, time_slice):
     file_path, npz_data = npz_file
     
     dataset = AmazonDataset(file_path, time_slice=time_slice)
-    item = dataset[time_idx]
+    input_data, target_data = dataset[time_idx]
     
     sample_array = npz_data["arr_0"].toarray()
     height, width = sample_array.shape
@@ -63,7 +63,8 @@ def test_get_item(npz_file, time_idx, time_slice):
     
     expected_keys = {f"arr_{i}" for i in range(time_slice)}
 
-    assert item.shape == (channels, time_slice, height, width)
+    assert input_data.shape == (channels, time_slice, height, width)
+    assert target_data.shape == (height, width)
 
 def test_len(npz_file, time_slice):
     file_path, npz_data = npz_file
