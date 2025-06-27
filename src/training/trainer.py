@@ -3,8 +3,8 @@ import logging
 from typing import List
 import numpy as np
 
-from training.early_stopping import EarlyStopping
-from utils.utils import load_config
+from src.training.early_stopping import EarlyStopping
+from src.utils.utils import load_config
 
 
 class Trainer:
@@ -16,9 +16,10 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         loss_fn: torch.nn.Module,
         device: torch.device,
+        config: dict,
     ):
         self.logger = logging.getLogger(__name__)
-        self.config = load_config(config)
+        self.config = config
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
