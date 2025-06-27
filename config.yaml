@@ -9,6 +9,7 @@ data:
    - 'data/amazon-1km/DTCB_diff_area.npz'
    - 'data/amazon-1km/DTCB_seasonality_factor.npz'
   val_ratio: 0.2
+  padding_multiple: 32
 training:
   batch_size: 2
   epochs: 1
