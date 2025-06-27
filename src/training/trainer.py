@@ -1,3 +1,5 @@
+"""Training module for Amazon deforestation prediction model."""
+
 import logging
 from typing import Any, Dict, List, Tuple
 
@@ -8,6 +10,12 @@ from src.training.early_stopping import EarlyStopping
 
 
 class Trainer:
+    """Trainer class for model training and evaluation.
+
+    This class handles the training loop, validation, and early stopping
+    for the Amazon deforestation prediction model.
+    """
+
     def __init__(
         self,
         model: torch.nn.Module,
@@ -18,6 +26,17 @@ class Trainer:
         device: torch.device,
         config: Dict[str, Any],
     ):
+        """Initialize the trainer.
+
+        Args:
+            model: The model to train
+            train_loader: Training data loader
+            val_loader: Validation data loader
+            optimizer: Optimizer for training
+            loss_fn: Loss function
+            device: Device to run training on
+            config: Configuration dictionary
+        """
         self.logger = logging.getLogger(__name__)
         self.config = config
         self.model = model
@@ -30,6 +49,11 @@ class Trainer:
     def train(
         self,
     ) -> Tuple[torch.nn.Module, List[float], List[float]]:
+        """Train the model with validation and early stopping.
+
+        Returns:
+            Tuple of (trained_model, average_train_losses, average_val_losses)
+        """
         epochs: int = self.config["training"]["epochs"]
         train_losses: List[float] = []
         val_losses: List[float] = []
@@ -43,12 +67,12 @@ class Trainer:
         )
 
         for epoch in range(epochs):
-            self.logger.info(f"Epoch {epoch+1}/{epochs}")
+            self.logger.info("Epoch %s/%s", epoch + 1, epochs)
 
             # training phase
             self.model.train()
 
-            for batch, (data, target) in enumerate(self.train_loader):
+            for data, target in self.train_loader:
                 # move data to device
                 data, target = data.to(self.device), target.to(self.device)
 
@@ -89,7 +113,9 @@ class Trainer:
             avg_val_loss.append(val_loss)
 
             # log losses
-            self.logger.info(f"Train loss: {train_loss}, Val loss: {val_loss}")
+            self.logger.info(
+                "Train loss: %s, Val loss: %s", train_loss, val_loss
+            )
 
             train_losses = []
             val_losses = []
@@ -102,10 +128,10 @@ class Trainer:
 
         return self.model, avg_train_loss, avg_val_loss
 
-    def evaluate(
-        self,
-        loader: torch.utils.data.DataLoader,
-    ) -> None:
+    def evaluate(self) -> None:
+        """Evaluate the model on test data.
 
+        TODO: Implement evaluation logic
+        """
         # return avg_loss, accuracy
         return

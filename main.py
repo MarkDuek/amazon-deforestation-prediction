@@ -16,7 +16,7 @@ def main():
 
     args = parse_args()
     config = load_config(args.config)
-    logger.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
+    logger.info("Loaded config:\n%s", json.dumps(config, indent=2))
 
     # get config variables
     device = get_device(config["device"])
@@ -24,7 +24,7 @@ def main():
 
     # load dataset
     amazon_dataset = AmazonDataset(config)
-    logger.info(f"Dataset sample shape: {amazon_dataset[0][0].shape}")
+    logger.info("Dataset sample shape: %s", amazon_dataset[0][0].shape)
 
     # split dataset
     train_data, val_data = random_split(
@@ -32,13 +32,13 @@ def main():
     )
 
     # create dataloaders
-    logger.info(f"Creating train loader")
+    logger.info("Creating train loader")
     train_loader = DataLoader(
         train_data,
         batch_size=config["training"]["batch_size"],
         shuffle=True,
     )
-    logger.info(f"Creating val loader")
+    logger.info("Creating val loader")
     val_loader = DataLoader(
         val_data,
         batch_size=config["training"]["batch_size"],
@@ -53,11 +53,11 @@ def main():
     optimizer = torch.optim.Adam(
         model.parameters(), lr=config["training"]["learning_rate"]
     )
-    logger.info(f"Optimizer summary: {optimizer}")
+    logger.info("Optimizer summary: %s", optimizer)
 
     # define loss function
     loss_fn = torch.nn.BCEWithLogitsLoss()
-    logger.info(f"Loss function summary: {loss_fn}")
+    logger.info("Loss function summary: %s", loss_fn)
 
     # define trainer
     trainer = Trainer(
@@ -65,7 +65,7 @@ def main():
     )
 
     # start training
-    logger.info(f"Starting training...")
+    logger.info("Starting training...")
     trainer.train()
 
 

@@ -1,3 +1,5 @@
+"""Utility functions for the Amazon deforestation prediction project."""
+
 import argparse
 
 import torch
@@ -11,8 +13,7 @@ def get_device(device_str: str = "cpu") -> torch.device:
     """
     if device_str == "cuda" and torch.cuda.is_available():
         return torch.device("cuda")
-    else:
-        return torch.device("cpu")
+    return torch.device("cpu")
 
 
 def parse_args(args=None) -> argparse.Namespace:
@@ -30,6 +31,6 @@ def load_config(path: str) -> dict:
     """
     Loads a configuration file from the given path.
     """
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config
