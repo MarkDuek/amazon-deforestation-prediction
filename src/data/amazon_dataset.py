@@ -1,9 +1,10 @@
 import logging
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from torch.utils.data import Dataset
-from typing import Any, Mapping, List, Optional, Tuple
+from typing import Any, Mapping, List, Optional, Tuple, Dict
 from typing_extensions import Callable
 
 
@@ -11,18 +12,22 @@ class AmazonDataset(Dataset):
 
     def __init__(
         self,
-        data_paths: List[str],
-        time_slice: int,
-        transform: Optional[Callable] = None
+        config: Dict[str, Any],
+        transform: Optional[Callable] = None,
     ):
+        self.config = config["data"]
+        self.data_paths = self.config["paths"]
+
         self.logger = logging.getLogger(__name__)
-        paths_str = '\n'.join([f"  - {path}" for path in data_paths])
+        paths_str = '\n'.join([f"  - {path}" for path in self.data_paths])
         self.logger.info(f"Initializing AmazonDataset with data paths:\n{paths_str}")
-        self.data_paths = data_paths
-        self.transform = transform
-        self.data = self.load_npz_files(data_paths)
-        self.time_slice = time_slice
+
+        self.data = self.load_npz_files(self.data_paths)
+
+        self.time_slice = self.config["time_slice"]
         self.total_time_steps = len(self.data[0].keys())
+        self.transform = transform
+
 
     def __len__(self) -> int:
         return self.total_time_steps - self.time_slice + 1
@@ -37,6 +42,10 @@ class AmazonDataset(Dataset):
         
         input_data = torch.tensor(time_slice_data)  # (C, T, H, W)
         target = torch.tensor(time_slice_data[0, -1, :, :])  # (H, W) - last time step of first channel
+        input_data = self.pad_to_multiple(input_data, self.config["padding_multiple"])
+        target = self.pad_to_multiple(target, self.config["padding_multiple"])
+
+        ## TODO: Add transform
         
         return input_data, target
     
@@ -96,3 +105,17 @@ class AmazonDataset(Dataset):
         ]
 
         return np.stack(arrays)
+
+    def pad_to_multiple(self, tensor: torch.Tensor, multiple: int) -> torch.Tensor:
+        self.logger.debug(f"Padding tensor with shape {tensor.shape} to multiple {multiple}")
+
+        *batch_dims, h, w = tensor.shape
+        target_h = ((h + multiple - 1) // multiple) * multiple
+        target_w = ((w + multiple - 1) // multiple) * multiple
+        self.logger.debug(f"Target shape: {target_h}x{target_w}")
+        
+        pad_h, pad_w = target_h - h, target_w - w
+        padding = (pad_w//2, pad_w - pad_w//2, pad_h//2, pad_h - pad_h//2)
+        self.logger.debug(f"Padding: {padding}")
+
+        return F.pad(tensor, padding, mode='constant', value=0.0)
