@@ -75,10 +75,10 @@ def test_get_item(config, npz_file, time_idx, time_slice):
 
     channels = len(dataset.data_paths)
 
-    expected_keys = {f"arr_{i}" for i in range(time_slice)}
+    # expected_keys = {f"arr_{i}" for i in range(time_slice)}
 
-    assert input_data.shape == (channels, time_slice, height, width)
-    assert target_data.shape == (height, width)
+    assert input_data.shape == (channels, time_slice - 1, height, width)
+    assert target_data.shape == (1, 1, height, width)
 
 
 def test_len(config, npz_file, time_slice):
