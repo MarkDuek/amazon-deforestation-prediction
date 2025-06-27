@@ -34,11 +34,11 @@ class AmazonDataset(Dataset):
     def __getitem__(self, time_idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         self.logger.debug(f"Getting item at index: {time_idx}")
         time_slice_data = self.get_time_slice(time_idx, self.time_slice)
-        time_slice_data = self.concatenate_sparse_matrix(time_slice_data)
+        concatenated_data = self.concatenate_sparse_matrix(time_slice_data)
 
-        input_data = torch.tensor(time_slice_data)  # (C, T, H, W)
+        input_data = torch.tensor(concatenated_data)  # (C, T, H, W)
         target = torch.tensor(
-            time_slice_data[0, -1, :, :]
+            concatenated_data[0, -1, :, :]
         )  # (H, W) - last time step of first channel
         input_data = self.pad_to_multiple(input_data, self.config["padding_multiple"])
         target = self.pad_to_multiple(target, self.config["padding_multiple"])
@@ -56,7 +56,7 @@ class AmazonDataset(Dataset):
         file_channels: List[Mapping[str, Any]] = []
 
         for file_data in self.data:
-            subset_data: Mapping[str, Any] = {}
+            subset_data: Dict[str, Any] = {}
             for i, time_step in enumerate(range(time_idx, time_idx + time_slice)):
                 key = f"arr_{time_step}"
                 if key in file_data:
@@ -82,7 +82,7 @@ class AmazonDataset(Dataset):
     ) -> np.ndarray:
 
         n_frames = len(data)
-        frames: list[np.ndarray] = []
+        frames: List[np.ndarray] = []
         for i in range(n_frames):
             obj = data[f"arr_{i}"]
             sparse_matrix = obj.item()
@@ -98,7 +98,7 @@ class AmazonDataset(Dataset):
         data_list: List[Mapping[str, Any]],
     ) -> np.ndarray:
 
-        arrays: list[np.ndarray] = [
+        arrays: List[np.ndarray] = [
             self.stack_sparse_matrix(data, d_type=np.float32) for data in data_list
         ]
 
