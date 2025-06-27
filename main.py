@@ -1,18 +1,19 @@
-import logging
 import json
+import logging
+
 import torch
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import DataLoader, random_split
 
 from src.data.amazon_dataset import AmazonDataset
-from src.utils.utils import get_device, parse_args, load_config
 from src.models.deep_lab_v3.model import DeepLabV3
 from src.training.trainer import Trainer
+from src.utils.utils import get_device, load_config, parse_args
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    
+
     args = parse_args()
     config = load_config(args.config)
     logger.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
@@ -42,18 +43,29 @@ def main():
         shuffle=False,
     )
 
+    # define model
     model = DeepLabV3(config)
     model.to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["learning_rate"])
+    # define optimizer
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config["training"]["learning_rate"]
+    )
     logger.info(f"Optimizer summary: {optimizer}")
 
+    # define loss function
     loss_fn = torch.nn.BCEWithLogitsLoss()
     logger.info(f"Loss function summary: {loss_fn}")
 
-    trainer = Trainer(model, train_loader, val_loader, optimizer, loss_fn, device, config)
+    # define trainer
+    trainer = Trainer(
+        model, train_loader, val_loader, optimizer, loss_fn, device, config
+    )
+
+    # start training
     logger.info(f"Starting training...")
     trainer.train()
+
 
 if __name__ == "__main__":
     main()

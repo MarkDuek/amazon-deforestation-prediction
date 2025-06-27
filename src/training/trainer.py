@@ -1,7 +1,8 @@
-import torch
 import logging
 from typing import List
+
 import numpy as np
+import torch
 
 from src.training.early_stopping import EarlyStopping
 from src.utils.utils import load_config
@@ -64,7 +65,7 @@ class Trainer:
                 self.optimizer.step()
                 # update training losses
                 train_losses.append(loss.item())
-            
+
             # validation phase
             self.model.eval()
             for data, target in self.val_loader:
@@ -97,7 +98,6 @@ class Trainer:
                 break
 
         return self.model, avg_train_loss, avg_val_loss
-
 
     def evaluate(
         self,

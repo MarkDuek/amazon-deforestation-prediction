@@ -1,6 +1,8 @@
 import argparse
-import yaml
+
 import torch
+import yaml
+
 
 def get_device(device_str: str = "cpu") -> torch.device:
     """
@@ -11,6 +13,7 @@ def get_device(device_str: str = "cpu") -> torch.device:
         return torch.device("cuda")
     else:
         return torch.device("cpu")
+
 
 def parse_args(args=None) -> argparse.Namespace:
     """

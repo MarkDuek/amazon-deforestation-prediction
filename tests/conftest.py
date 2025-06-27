@@ -1,8 +1,9 @@
-import pytest
-import numpy as np
 import sys
-import torch
 from pathlib import Path
+
+import numpy as np
+import pytest
+import torch
 from scipy import sparse
 
 project_root = Path(__file__).parent.parent
@@ -12,22 +13,33 @@ from src.utils.utils import load_config
 
 local_config = load_config(project_root / "config.yaml")
 
+
 @pytest.fixture(params=[project_root / "config.yaml"])
 def config(request, time_slice):
     config = load_config(request.param)
     return config
 
-@pytest.fixture(params=['cpu', 'cuda'])
+
+@pytest.fixture(params=["cpu", "cuda"])
 def device(request):
     return request.param
 
-@pytest.fixture(params=[
-    {f"arr_{i}": sparse.csr_matrix(np.array([[i*4+1, i*4+2], [i*4+3, i*4+4]])) for i in range(175)},
-    # {f"arr_{i}": sparse.csr_matrix(np.array([[i*0.4+0.1, i*0.4+0.2], [i*0.4+0.3, i*0.4+0.4]])) for i in range(175)},
-    # {f"arr_{i}": sparse.csr_matrix(np.array([[i*4.4+1.1, i*4.4+2.2], [i*4.4+3.3, i*4.4+4.4]])) for i in range(175)},
-])
+
+@pytest.fixture(
+    params=[
+        {
+            f"arr_{i}": sparse.csr_matrix(
+                np.array([[i * 4 + 1, i * 4 + 2], [i * 4 + 3, i * 4 + 4]])
+            )
+            for i in range(175)
+        },
+        # {f"arr_{i}": sparse.csr_matrix(np.array([[i*0.4+0.1, i*0.4+0.2], [i*0.4+0.3, i*0.4+0.4]])) for i in range(175)},
+        # {f"arr_{i}": sparse.csr_matrix(np.array([[i*4.4+1.1, i*4.4+2.2], [i*4.4+3.3, i*4.4+4.4]])) for i in range(175)},
+    ]
+)
 def npz_data(request):
     return request.param
+
 
 @pytest.fixture(params=[5])
 def npz_file(tmp_path: Path, npz_data: dict, request):
@@ -38,16 +50,29 @@ def npz_file(tmp_path: Path, npz_data: dict, request):
         file_paths.append(str(file_path))
     return file_paths, npz_data
 
+
 @pytest.fixture(params=[7])
 def time_slice(request):
     return request.param
+
 
 # TODO: Add test for time_idx = 200
 @pytest.fixture(params=[0, 1, 2])
 def time_idx(request):
     return request.param
 
+
 # @pytest.fixture(params=[torch.randn(5, 175, 2583, 3317)])
-@pytest.fixture(params=[torch.randn(local_config["training"]["batch_size"], 5, local_config["data"]["time_slice"], 16, 16)]) # (B, C, T(slice), H, W)
+@pytest.fixture(
+    params=[
+        torch.randn(
+            local_config["training"]["batch_size"],
+            5,
+            local_config["data"]["time_slice"],
+            16,
+            16,
+        )
+    ]
+)  # (B, C, T(slice), H, W)
 def input_tensor(request):
     return request.param

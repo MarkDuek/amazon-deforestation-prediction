@@ -1,7 +1,7 @@
 import logging
-import torch
-
 from typing import Callable
+
+import torch
 
 
 class EarlyStopping:
@@ -16,7 +16,7 @@ class EarlyStopping:
         self.logger = logging.getLogger(__name__)
         self.patience = patience
         self.delta = delta
-        self.best_loss = float('inf')
+        self.best_loss = float("inf")
         self.counter = 0
         self.early_stop = False
         self.path = path
@@ -31,7 +31,9 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model)
         elif score < self.best_loss + self.delta:
             self.counter += 1
-            self.logger.info(f"EarlyStopping counter: {self.counter} out of {self.patience}")
+            self.logger.info(
+                f"EarlyStopping counter: {self.counter} out of {self.patience}"
+            )
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -41,5 +43,7 @@ class EarlyStopping:
 
     def save_checkpoint(self, val_loss, model):
         if self.verbose:
-            self.trace_func(f"Validation loss decreased ({self.best_loss:.6f} --> {val_loss:.6f}).  Saving model...")
+            self.trace_func(
+                f"Validation loss decreased ({self.best_loss:.6f} --> {val_loss:.6f}).  Saving model..."
+            )
         torch.save(model.state_dict(), self.path)
