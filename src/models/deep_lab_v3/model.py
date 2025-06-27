@@ -1,8 +1,8 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import einops
-import segmentation_models_pytorch as smp
+import segmentation_models_pytorch as smp  # type: ignore[import-untyped]
 import torch
 import torch.nn as nn
 
@@ -35,13 +35,13 @@ class DeepLabV3(nn.Module):
 
         B, C, T, H, W = x.shape  # (B, C, T, H, W)
 
-        outputs = []
+        outputs: List[torch.Tensor] = []
         for t in range(T):
             x_t = x[:, :, t, :, :]  # (B, C, H, W)
             x_t = self.model(x_t)
             outputs.append(x_t)
 
-        outputs = torch.stack(outputs, dim=2)  # (B, 1, T, H, W)
-        outputs = self.head(outputs)  # (B, 1, 1, H, W)
+        stacked_output = torch.stack(outputs, dim=2)  # (B, 1, T, H, W)
+        final_output = self.head(stacked_output)  # (B, 1, 1, H, W)
 
-        return outputs
+        return final_output
