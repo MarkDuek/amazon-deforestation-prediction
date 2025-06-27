@@ -13,8 +13,9 @@ from src.utils.utils import load_config
 local_config = load_config(project_root / "config.yaml")
 
 @pytest.fixture(params=[project_root / "config.yaml"])
-def config(request):
-    return load_config(request.param)
+def config(request, time_slice):
+    config = load_config(request.param)
+    return config
 
 @pytest.fixture(params=['cpu', 'cuda'])
 def device(request):
@@ -41,6 +42,7 @@ def npz_file(tmp_path: Path, npz_data: dict, request):
 def time_slice(request):
     return request.param
 
+# TODO: Add test for time_idx = 200
 @pytest.fixture(params=[0, 1, 2])
 def time_idx(request):
     return request.param
