@@ -1,16 +1,27 @@
+"""Main module for Amazon deforestation prediction training pipeline.
+
+This module provides the main entry point for training deep learning models
+on the Amazon deforestation dataset.
+"""
+
 import json
 import logging
 
 import torch
 from torch.utils.data import DataLoader, random_split
+from torchinfo import summary
 
 from src.data.amazon_dataset import AmazonDataset
 from src.models.deep_lab_v3.model import DeepLabV3
+# from src.models.dummy.model import DummyModel
 from src.training.trainer import Trainer
 from src.utils.utils import get_device, load_config, parse_args
 
 
 def main():
+    """Main function to run the Amazon deforestation
+    prediction training pipeline."""
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
@@ -32,13 +43,13 @@ def main():
     )
 
     # create dataloaders
-    logger.info("Creating train loader")
+    logger.info("Creating Train loader")
     train_loader = DataLoader(
         train_data,
         batch_size=config["training"]["batch_size"],
         shuffle=True,
     )
-    logger.info("Creating val loader")
+    logger.info("Creating Validation loader")
     val_loader = DataLoader(
         val_data,
         batch_size=config["training"]["batch_size"],
@@ -47,7 +58,9 @@ def main():
 
     # define model
     model = DeepLabV3(config)
-    model.to(device)
+    # model = DummyModel(config)
+    logger.info("Model summary:")
+    summary(model, input_size=(2, 5, 7, 256, 256))
 
     # define optimizer
     optimizer = torch.optim.Adam(
@@ -65,8 +78,9 @@ def main():
     )
 
     # start training
-    logger.info("Starting training...")
+    logger.info("%s Starting training %s", 16 * "=", 16 * "=")
     trainer.train()
+    logger.info("%s Training completed %s", 16 * "=", 16 * "=")
 
 
 if __name__ == "__main__":
