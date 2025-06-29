@@ -1,5 +1,7 @@
 /data
+/memory_records
 __pycache__/
 .idea/
 .coverage
+.pickle
 coverage.xml
