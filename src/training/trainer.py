@@ -7,6 +7,11 @@ import numpy as np
 import torch
 
 from src.training.early_stopping import EarlyStopping
+from src.utils.utils import (
+    start_record_memory_history,
+    stop_record_memory_history,
+    export_memory_snapshot,
+)
 
 
 class Trainer:
@@ -65,6 +70,16 @@ class Trainer:
             path=self.config["early_stopping"]["path"],
             verbose=self.config["early_stopping"]["verbose"],
         )
+
+        # move model to device
+        self.model.to(self.device)
+        self.logger.info("Model moved to device: %s", self.device)
+
+        # record memory history
+        if self.config["memory_record"]["enabled"]:
+            start_record_memory_history(
+                self.logger, self.config["memory_record"]["num_events"]
+            )
 
         for epoch in range(epochs):
             self.logger.info("Epoch %s/%s", epoch + 1, epochs)
@@ -125,6 +140,10 @@ class Trainer:
             if early_stopping.early_stop:
                 self.logger.info("Early stopping!")
                 break
+
+        if self.config["memory_record"]["enabled"]:
+            export_memory_snapshot(self.logger)
+            stop_record_memory_history(self.logger)
 
         return self.model, avg_train_loss, avg_val_loss
 
