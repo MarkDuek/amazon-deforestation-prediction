@@ -31,7 +31,7 @@ class AmazonDataset(Dataset):
             "Initializing AmazonDataset with data paths:\n%s", paths_str
         )
 
-        self.data = self.load_npz_files(self.data_paths)
+        self.data = self.__load_npz_files__(self.data_paths)
 
         self.time_slice = self.config["time_slice"]
         self.total_time_steps = len(self.data[0].keys())
@@ -51,8 +51,8 @@ class AmazonDataset(Dataset):
             Tuple of (input_data, target) tensors
         """
         self.logger.debug("Getting item at index: %s", time_idx)
-        time_slice_data = self.get_time_slice(time_idx, self.time_slice)
-        concatenated_data = self.concatenate_sparse_matrix(time_slice_data)
+        time_slice_data = self.__get_time_slice__(time_idx, self.time_slice)
+        concatenated_data = self.__concatenate_sparse_matrix__(time_slice_data)
 
         # (C, T-1, H, W) - first T-1 time slices
         input_data = torch.tensor(concatenated_data[:, :-1, :, :])
@@ -63,17 +63,19 @@ class AmazonDataset(Dataset):
             .unsqueeze(0)
         )
 
-        input_data = self.pad_to_multiple(
+        input_data = self.__pad_to_multiple__(
             input_data, self.config["padding_multiple"]
         )
-        target = self.pad_to_multiple(target, self.config["padding_multiple"])
+        target = self.__pad_to_multiple__(
+            target, self.config["padding_multiple"]
+        )
 
         if self.transform is not None:
             input_data = self.transform(input_data)
 
         return input_data, target
 
-    def get_time_slice(
+    def __get_time_slice__(
         self,
         time_idx: int,
         time_slice: int,
@@ -104,7 +106,7 @@ class AmazonDataset(Dataset):
 
         return file_channels
 
-    def load_npz_files(
+    def __load_npz_files__(
         self,
         paths: List[str],
     ) -> List[np.lib.npyio.NpzFile]:
@@ -118,7 +120,7 @@ class AmazonDataset(Dataset):
         """
         return [np.load(path, allow_pickle=True) for path in paths]
 
-    def stack_sparse_matrix(
+    def __stack_sparse_matrix__(
         self,
         data: Mapping[str, Any],
         d_type: Any = np.float32,
@@ -144,7 +146,7 @@ class AmazonDataset(Dataset):
 
         return array_3d
 
-    def concatenate_sparse_matrix(
+    def __concatenate_sparse_matrix__(
         self,
         data_list: List[Mapping[str, Any]],
     ) -> np.ndarray:
@@ -157,13 +159,13 @@ class AmazonDataset(Dataset):
             Concatenated numpy array
         """
         arrays: List[np.ndarray] = [
-            self.stack_sparse_matrix(data, d_type=np.float32)
+            self.__stack_sparse_matrix__(data, d_type=np.float32)
             for data in data_list
         ]
 
         return np.stack(arrays)
 
-    def pad_to_multiple(
+    def __pad_to_multiple__(
         self, tensor: torch.Tensor, multiple: int
     ) -> torch.Tensor:
         """Pad tensor dimensions to be multiples of a given value.
