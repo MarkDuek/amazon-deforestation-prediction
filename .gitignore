@@ -1,4 +1,5 @@
 /data
+/src/data/
 /memory_records
 __pycache__/
 .idea/
