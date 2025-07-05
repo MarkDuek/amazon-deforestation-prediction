@@ -63,9 +63,7 @@ def start_record_memory_history(
         return
 
     logger.info("Starting snapshot record_memory_history")
-    torch.cuda.memory._record_memory_history(
-        max_entries=max_entries
-    )
+    torch.cuda.memory._record_memory_history(max_entries=max_entries)
 
 
 def stop_record_memory_history(logger: logging.Logger) -> None:
