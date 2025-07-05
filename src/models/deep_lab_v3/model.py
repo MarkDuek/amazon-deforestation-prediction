@@ -29,8 +29,8 @@ class DeepLabV3(nn.Module):
         )
 
         self.head = nn.Conv3d(
-            1, 1, kernel_size=(self.time_slice, 1, 1)
-        )  # (B, 1, T, H, W) -> (B, 1, 1, H, W)
+            1, 1, kernel_size=(self.time_slice - 1, 1, 1)
+        )  # (B, 1, T, H, W) -> (B, 1, 1, H, W) where T = time_slice-1
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through the DeepLabV3 model.
@@ -41,12 +41,13 @@ class DeepLabV3(nn.Module):
         Returns:
             Output tensor of shape (B, 1, 1, H, W)
         """
-        self.logger.debug("Model received tensor with shape: %s", x.shape)
-
         if len(x.shape) == 4:
             # If we receive (C, T, H, W), add batch dimension
             x = x.unsqueeze(0)  # Add batch dimension: (1, C, T, H, W)
             self.logger.debug("Added batch dimension, new shape: %s", x.shape)
+
+        # x = einops.rearrange(x, "b c t h w -> b t c h w")
+        self.logger.debug("Model received tensor with shape: %s", x.shape)
 
         _, _, time_frames, _, _ = x.shape  # (B, C, T, H, W)
 
