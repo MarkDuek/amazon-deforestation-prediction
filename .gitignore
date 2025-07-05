@@ -1,5 +1,5 @@
 /data
-/src/data/
+/src/data/patches
 /memory_records
 __pycache__/
 .idea/
