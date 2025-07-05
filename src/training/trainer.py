@@ -1,17 +1,17 @@
 """Training module for Amazon deforestation prediction model."""
 
 import logging
+import time
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from src.training.early_stopping import EarlyStopping
-from src.utils.utils import (
-    start_record_memory_history,
-    stop_record_memory_history,
-    export_memory_snapshot,
-)
+from src.utils.utils import (export_memory_snapshot,
+                             start_record_memory_history,
+                             stop_record_memory_history)
 
 
 class Trainer:
@@ -51,6 +51,27 @@ class Trainer:
         self.loss_fn = loss_fn
         self.device = device
 
+    def _format_time(self, seconds: float) -> str:
+        """Format time duration in a human-readable format.
+        
+        Args:
+            seconds: Time duration in seconds
+            
+        Returns:
+            Formatted time string (e.g., "1h 23m 45s")
+        """
+        if seconds < 60:
+            return f"{seconds:.0f}s"
+        elif seconds < 3600:
+            mins = int(seconds // 60)
+            secs = int(seconds % 60)
+            return f"{mins}m {secs}s"
+        else:
+            hours = int(seconds // 3600)
+            mins = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            return f"{hours}h {mins}m {secs}s"
+
     def train(
         self,
     ) -> Tuple[torch.nn.Module, List[float], List[float]]:
@@ -81,13 +102,30 @@ class Trainer:
                 self.logger, self.config["memory_record"]["num_events"]
             )
 
+        # Training start time
+        training_start_time = time.time()
+
         for epoch in range(epochs):
-            self.logger.info("Epoch %s/%s", epoch + 1, epochs)
+            epoch_start_time = time.time()
+            self.logger.info(
+                "Epoch %s/%s started at %s",
+                epoch + 1,
+                epochs,
+                time.strftime("%H:%M:%S", time.localtime(epoch_start_time))
+            )
 
             # training phase
             self.model.train()
 
-            for data, target in self.train_loader:
+            # Progress bar for training batches
+            train_pbar = tqdm(
+                self.train_loader,
+                desc=f"Training Epoch {epoch + 1}/{epochs}",
+                unit="batch",
+                leave=False
+            )
+
+            for data, target in train_pbar:
                 # move data to device
                 data, target = data.to(self.device), target.to(self.device)
 
@@ -105,21 +143,41 @@ class Trainer:
                 self.optimizer.step()
                 # update training losses
                 train_losses.append(train_loss_tensor.item())
+                
+                # Update progress bar with current loss
+                train_pbar.set_postfix({
+                    'loss': f'{train_loss_tensor.item():.4f}'
+                })
 
             # validation phase
             self.model.eval()
-            for data, target in self.val_loader:
-                # move data to device
-                data, target = data.to(self.device), target.to(self.device)
+            
+            # Progress bar for validation batches
+            val_pbar = tqdm(
+                self.val_loader,
+                desc=f"Validation Epoch {epoch + 1}/{epochs}",
+                unit="batch",
+                leave=False
+            )
+            
+            with torch.no_grad():
+                for data, target in val_pbar:
+                    # move data to device
+                    data, target = data.to(self.device), target.to(self.device)
 
-                # forward pass
-                val_output: torch.Tensor = self.model(data)
-                # compute loss
-                val_loss_tensor: torch.Tensor = self.loss_fn(
-                    val_output, target
-                )
-                # update validation losses
-                val_losses.append(val_loss_tensor.item())
+                    # forward pass
+                    val_output: torch.Tensor = self.model(data)
+                    # compute loss
+                    val_loss_tensor: torch.Tensor = self.loss_fn(
+                        val_output, target
+                    )
+                    # update validation losses
+                    val_losses.append(val_loss_tensor.item())
+                    
+                    # Update progress bar with current loss
+                    val_pbar.set_postfix({
+                        'loss': f'{val_loss_tensor.item():.4f}'
+                    })
 
             # compute average losses
             train_loss: float = float(np.average(train_losses))
@@ -127,9 +185,24 @@ class Trainer:
             avg_train_loss.append(train_loss)
             avg_val_loss.append(val_loss)
 
-            # log losses
+            # Calculate epoch duration and estimate remaining time
+            epoch_duration = time.time() - epoch_start_time
+            elapsed_time = time.time() - training_start_time
+            avg_epoch_time = elapsed_time / (epoch + 1)
+            remaining_epochs = epochs - (epoch + 1)
+            eta = remaining_epochs * avg_epoch_time
+
+            # log losses and timing information
             self.logger.info(
-                "Train loss: %s, Val loss: %s", train_loss, val_loss
+                "Train loss: %s, Val loss: %s | "
+                "Epoch time: %.1fs | "
+                "Elapsed: %s | "
+                "ETA: %s",
+                train_loss,
+                val_loss,
+                epoch_duration,
+                self._format_time(elapsed_time),
+                self._format_time(eta)
             )
 
             train_losses = []
