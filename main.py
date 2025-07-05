@@ -15,6 +15,7 @@ from src.data.amazon_dataset import AmazonDataset
 from src.models.deep_lab_v3.model import DeepLabV3
 # from src.models.dummy.model import DummyModel
 from src.training.trainer import Trainer
+from src.utils.data_utils import inspect_h5_file
 from src.utils.utils import get_device, load_config, parse_args
 
 
@@ -33,9 +34,14 @@ def main():
     device = get_device(config["device"])
     val_ratio = config["data"]["val_ratio"]
 
+    # inspect h5 files
+    inspect_h5_file(config["data"]["h5_paths"]["input"])
+    inspect_h5_file(config["data"]["h5_paths"]["target"])
+
     # load dataset
     amazon_dataset = AmazonDataset(config)
-    logger.info("Dataset sample shape: %s", amazon_dataset[0][0].shape)
+    logger.info("Dataset input shape: %s", amazon_dataset[0][0].shape)
+    logger.info("Dataset target shape: %s", amazon_dataset[0][1].shape)
 
     # split dataset
     train_data, val_data = random_split(
@@ -48,19 +54,27 @@ def main():
         train_data,
         batch_size=config["training"]["batch_size"],
         shuffle=True,
+        num_workers=4,  # Use multiple workers for faster data loading
+        pin_memory=True,  # Pin memory for faster GPU transfers
+        persistent_workers=True,  # Keep workers alive between epochs
+        prefetch_factor=2,  # Prefetch batches
     )
     logger.info("Creating Validation loader")
     val_loader = DataLoader(
         val_data,
         batch_size=config["training"]["batch_size"],
         shuffle=False,
+        num_workers=4,  # Use multiple workers for faster data loading
+        pin_memory=True,  # Pin memory for faster GPU transfers
+        persistent_workers=True,  # Keep workers alive between epochs
+        prefetch_factor=2,  # Prefetch batches
     )
 
     # define model
     model = DeepLabV3(config)
     # model = DummyModel(config)
     logger.info("Model summary:")
-    summary(model, input_size=(2, 5, 7, 256, 256))
+    summary(model, input_size=(5, 7, 16, 16))
 
     # define optimizer
     optimizer = torch.optim.Adam(
