@@ -2,16 +2,20 @@ seed: 42
 device: cuda
 data:
   time_slice: 7
+  patch_size: 256
+  val_ratio: 0.2
+  padding_multiple: 128
+  h5_paths:
+    input: "src/data/patches/input_patches.h5"
+    target: "src/data/patches/target_patches.h5"
   paths:
    - 'data/amazon-1km/DTCB_acumul_area.npz'
    - 'data/amazon-1km/DTCB_area.npz'
    - 'data/amazon-1km/DTCB_count_areas.npz'
    - 'data/amazon-1km/DTCB_diff_area.npz'
    - 'data/amazon-1km/DTCB_seasonality_factor.npz'
-  val_ratio: 0.2
-  padding_multiple: 32
 training:
-  batch_size: 2
+  batch_size: 8
   epochs: 1
   learning_rate: 0.001
 early_stopping:
@@ -26,6 +30,6 @@ model:
     in_channels: 5
     classes: 1
 memory_record:
-  enabled: true
+  enabled: false
   num_events: 100000
   
