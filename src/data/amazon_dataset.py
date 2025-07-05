@@ -1,11 +1,11 @@
 """Amazon deforestation dataset implementation for PyTorch."""
 
-import logging
-from typing import Any, Dict, List, Mapping, Optional, Tuple
-
 import numpy as np
+import h5py
+import logging
+from typing import Any, Dict, Optional, Tuple
+
 import torch
-import torch.nn.functional as F
 from torch.utils.data import Dataset
 from typing_extensions import Callable
 
@@ -24,6 +24,7 @@ class AmazonDataset(Dataset):
     ):
         self.config = config["data"]
         self.data_paths = self.config["paths"]
+        self.time_slice = self.config["time_slice"]
 
         self.logger = logging.getLogger(__name__)
         paths_str = "\n".join([f"  - {path}" for path in self.data_paths])
@@ -31,170 +32,67 @@ class AmazonDataset(Dataset):
             "Initializing AmazonDataset with data paths:\n%s", paths_str
         )
 
-        self.data = self.__load_npz_files__(self.data_paths)
+        self.input_h5 = h5py.File(self.config["h5_paths"]["input"], "r")
+        self.target_h5 = h5py.File(self.config["h5_paths"]["target"], "r")
 
-        self.time_slice = self.config["time_slice"]
-        self.total_time_steps = len(self.data[0].keys())
+        self.time_indices = self.input_h5["time_indices"][:]
+        print("time_indices: ", self.time_indices)
+        self.num_patches_per_time = np.sum(self.time_indices == 0)
+        print("num_patches_per_time: ", self.num_patches_per_time)
+        print("time_indices shape: ", self.time_indices.shape[0])
+        print("time_slice: ", self.time_slice)
+        expected_len = self.num_patches_per_time * (
+            self.time_indices[-1] - self.time_slice + 1
+        )
+        print("len: ", expected_len)
+
         self.transform = transform
 
     def __len__(self) -> int:
         """Return the total number of samples in the dataset."""
-        return self.total_time_steps - self.time_slice + 1
+        return self.num_patches_per_time * (
+            self.time_indices[-1] - self.time_slice + 1
+        )
 
-    def __getitem__(self, time_idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get a single sample from the dataset.
 
         Args:
-            time_idx: Time index for the sample
+            idx: Index for the sample
 
         Returns:
             Tuple of (input_data, target) tensors
         """
-        self.logger.debug("Getting item at index: %s", time_idx)
-        time_slice_data = self.__get_time_slice__(time_idx, self.time_slice)
-        concatenated_data = self.__concatenate_sparse_matrix__(time_slice_data)
 
-        # (C, T-1, H, W) - first T-1 time slices
-        input_data = torch.tensor(concatenated_data[:, :-1, :, :])
-        # (1, 1, H, W) - last time step of second channel
-        target = (
-            torch.tensor(concatenated_data[1, -1, :, :])
-            .unsqueeze(0)
-            .unsqueeze(0)
-        )
-
-        input_data = self.__pad_to_multiple__(
-            input_data, self.config["padding_multiple"]
-        )
-        target = self.__pad_to_multiple__(
-            target, self.config["padding_multiple"]
-        )
-
-        if self.transform is not None:
-            input_data = self.transform(input_data)
-
-        return input_data, target
-
-    def __get_time_slice__(
-        self,
-        time_idx: int,
-        time_slice: int,
-    ) -> List[Mapping[str, Any]]:
-        """Extract a time slice from the dataset.
-
-        Args:
-            time_idx: Starting time index
-            time_slice: Length of the time slice
-
-        Returns:
-            List of mappings containing the time slice data
-        """
-        file_channels: List[Mapping[str, Any]] = []
-
-        for file_data in self.data:
-            subset_data: Dict[str, Any] = {}
-            for i, time_step in enumerate(
-                range(time_idx, time_idx + time_slice)
-            ):
-                key = f"arr_{time_step}"
-                if key in file_data:
-                    subset_data[f"arr_{i}"] = file_data[key]
-                else:
-                    self.logger.warning("Key '%s' not found in file data", key)
-
-            file_channels.append(subset_data)
-
-        return file_channels
-
-    def __load_npz_files__(
-        self,
-        paths: List[str],
-    ) -> List[np.lib.npyio.NpzFile]:
-        """Load NPZ files from the given paths.
-
-        Args:
-            paths: List of file paths to load
-
-        Returns:
-            List of loaded NPZ files
-        """
-        return [np.load(path, allow_pickle=True) for path in paths]
-
-    def __stack_sparse_matrix__(
-        self,
-        data: Mapping[str, Any],
-        d_type: Any = np.float32,
-    ) -> np.ndarray:
-        """Stack sparse matrices into a 3D array.
-
-        Args:
-            data: Mapping containing sparse matrix data
-            d_type: Data type for the output array
-
-        Returns:
-            3D numpy array of stacked sparse matrices
-        """
-        n_frames = len(data)
-        frames: List[np.ndarray] = []
-        for i in range(n_frames):
-            obj = data[f"arr_{i}"]
-            sparse_matrix = obj.item()
-            arr: np.ndarray = sparse_matrix.toarray()
-            frames.append(arr)
-
-        array_3d: np.ndarray = np.stack(frames).astype(d_type)
-
-        return array_3d
-
-    def __concatenate_sparse_matrix__(
-        self,
-        data_list: List[Mapping[str, Any]],
-    ) -> np.ndarray:
-        """Concatenate sparse matrices from multiple data sources.
-
-        Args:
-            data_list: List of data mappings to concatenate
-
-        Returns:
-            Concatenated numpy array
-        """
-        arrays: List[np.ndarray] = [
-            self.__stack_sparse_matrix__(data, d_type=np.float32)
-            for data in data_list
+        # Compute sequence indices
+        seq_indices = [
+            idx + i * self.num_patches_per_time
+            for i in range(self.time_slice)
         ]
 
-        return np.stack(arrays)
+        # Check bounds against actual HDF5 dataset size
+        h5_dataset_size = self.input_h5["patches"].shape[0]  # type: ignore
+        if seq_indices[-1] >= h5_dataset_size:
+            raise IndexError(f"Index {idx} with time_slice={self.time_slice} "
+                            f"exceeds HDF5 dataset size {h5_dataset_size}")
 
-    def __pad_to_multiple__(
-        self, tensor: torch.Tensor, multiple: int
-    ) -> torch.Tensor:
-        """Pad tensor dimensions to be multiples of a given value.
+        # Load input sequence patches
+        sequence = np.stack([
+            self.input_h5["patches"][i] for i in seq_indices
+        ])  # type: ignore  # shape: (time_slice, C, h, w)
 
-        Args:
-            tensor: Input tensor to pad
-            multiple: Value to pad dimensions to multiples of
+        sequence_tensor = torch.tensor(sequence, dtype=torch.float32)
 
-        Returns:
-            Padded tensor
-        """
-        self.logger.debug(
-            "Padding tensor with shape %s to multiple %s",
-            tensor.shape,
-            multiple,
-        )
+        # Shape: (time_slice-1, C, H, W)
+        input_tensor = sequence_tensor[:-1, :, :, :]  
+        # Transpose to (C, time_slice-1, H, W) to match model expectation
+        input_tensor = input_tensor.transpose(0, 1)  # (C, time_slice-1, H, W)
+        
+        target_tensor = sequence_tensor[-1, 1, :, :].unsqueeze(0).unsqueeze(0)
 
-        *_, h, w = tensor.shape
-        target_h = ((h + multiple - 1) // multiple) * multiple
-        target_w = ((w + multiple - 1) // multiple) * multiple
-        self.logger.debug("Target shape: %sx%s", target_h, target_w)
+        if self.transform:
+            # (C, time_slice-1, H, W)
+            input_tensor = self.transform(input_tensor)
+            target_tensor = self.transform(target_tensor)
 
-        pad_h, pad_w = target_h - h, target_w - w
-        padding = (
-            pad_w // 2,
-            pad_w - pad_w // 2,
-            pad_h // 2,
-            pad_h - pad_h // 2,
-        )
-        self.logger.debug("Padding: %s", padding)
-
-        return F.pad(tensor, padding, mode="constant", value=0.0)
+        return input_tensor, target_tensor
