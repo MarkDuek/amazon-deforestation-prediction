@@ -2,12 +2,12 @@
 
 import logging
 from typing import Any, Dict, List, Mapping
-from numpy.lib.npyio import NpzFile
-import h5py
 
+import h5py
 import numpy as np
 import torch
 import torch.nn.functional as F
+from numpy.lib.npyio import NpzFile
 
 
 # data methods
@@ -155,8 +155,8 @@ def get_patch(data: torch.Tensor, patch_size: int) -> List[Dict[str, Any]]:
         for y in range(num_y_patches):
             patch = data[
                 :,
-                x * patch_size: (x + 1) * patch_size,
-                y * patch_size: (y + 1) * patch_size,
+                x * patch_size : (x + 1) * patch_size,
+                y * patch_size : (y + 1) * patch_size,
             ]
             patches.append(
                 {
@@ -183,5 +183,7 @@ def inspect_h5_file(file_path: str) -> None:
         for name, dataset in f.items():
             logger.info(
                 "  Dataset '%s': shape = %s, dtype = %s",
-                name, dataset.shape, dataset.dtype
+                name,
+                dataset.shape,
+                dataset.dtype,
             )

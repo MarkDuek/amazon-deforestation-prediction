@@ -1,10 +1,10 @@
 """Amazon deforestation dataset implementation for PyTorch."""
 
-import numpy as np
-import h5py
 import logging
 from typing import Any, Dict, Optional, Tuple
 
+import h5py
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 from typing_extensions import Callable
@@ -66,28 +66,29 @@ class AmazonDataset(Dataset):
 
         # Compute sequence indices
         seq_indices = [
-            idx + i * self.num_patches_per_time
-            for i in range(self.time_slice)
+            idx + i * self.num_patches_per_time for i in range(self.time_slice)
         ]
 
         # Check bounds against actual HDF5 dataset size
         h5_dataset_size = self.input_h5["patches"].shape[0]  # type: ignore
         if seq_indices[-1] >= h5_dataset_size:
-            raise IndexError(f"Index {idx} with time_slice={self.time_slice} "
-                            f"exceeds HDF5 dataset size {h5_dataset_size}")
+            raise IndexError(
+                f"Index {idx} with time_slice={self.time_slice} "
+                f"exceeds HDF5 dataset size {h5_dataset_size}"
+            )
 
         # Load input sequence patches
-        sequence = np.stack([
-            self.input_h5["patches"][i] for i in seq_indices
-        ])  # type: ignore  # shape: (time_slice, C, h, w)
+        sequence = np.stack(
+            [self.input_h5["patches"][i] for i in seq_indices]
+        )  # type: ignore  # shape: (time_slice, C, h, w)
 
         sequence_tensor = torch.tensor(sequence, dtype=torch.float32)
 
         # Shape: (time_slice-1, C, H, W)
-        input_tensor = sequence_tensor[:-1, :, :, :]  
+        input_tensor = sequence_tensor[:-1, :, :, :]
         # Transpose to (C, time_slice-1, H, W) to match model expectation
         input_tensor = input_tensor.transpose(0, 1)  # (C, time_slice-1, H, W)
-        
+
         target_tensor = sequence_tensor[-1, 1, :, :].unsqueeze(0).unsqueeze(0)
 
         if self.transform:

@@ -53,10 +53,10 @@ class Trainer:
 
     def _format_time(self, seconds: float) -> str:
         """Format time duration in a human-readable format.
-        
+
         Args:
             seconds: Time duration in seconds
-            
+
         Returns:
             Formatted time string (e.g., "1h 23m 45s")
         """
@@ -111,7 +111,7 @@ class Trainer:
                 "Epoch %s/%s started at %s",
                 epoch + 1,
                 epochs,
-                time.strftime("%H:%M:%S", time.localtime(epoch_start_time))
+                time.strftime("%H:%M:%S", time.localtime(epoch_start_time)),
             )
 
             # training phase
@@ -122,7 +122,7 @@ class Trainer:
                 self.train_loader,
                 desc=f"Training Epoch {epoch + 1}/{epochs}",
                 unit="batch",
-                leave=False
+                leave=False,
             )
 
             for data, target in train_pbar:
@@ -143,23 +143,23 @@ class Trainer:
                 self.optimizer.step()
                 # update training losses
                 train_losses.append(train_loss_tensor.item())
-                
+
                 # Update progress bar with current loss
-                train_pbar.set_postfix({
-                    'loss': f'{train_loss_tensor.item():.4f}'
-                })
+                train_pbar.set_postfix(
+                    {"loss": f"{train_loss_tensor.item():.4f}"}
+                )
 
             # validation phase
             self.model.eval()
-            
+
             # Progress bar for validation batches
             val_pbar = tqdm(
                 self.val_loader,
                 desc=f"Validation Epoch {epoch + 1}/{epochs}",
                 unit="batch",
-                leave=False
+                leave=False,
             )
-            
+
             with torch.no_grad():
                 for data, target in val_pbar:
                     # move data to device
@@ -173,11 +173,11 @@ class Trainer:
                     )
                     # update validation losses
                     val_losses.append(val_loss_tensor.item())
-                    
+
                     # Update progress bar with current loss
-                    val_pbar.set_postfix({
-                        'loss': f'{val_loss_tensor.item():.4f}'
-                    })
+                    val_pbar.set_postfix(
+                        {"loss": f"{val_loss_tensor.item():.4f}"}
+                    )
 
             # compute average losses
             train_loss: float = float(np.average(train_losses))
@@ -202,7 +202,7 @@ class Trainer:
                 val_loss,
                 epoch_duration,
                 self._format_time(elapsed_time),
-                self._format_time(eta)
+                self._format_time(eta),
             )
 
             train_losses = []

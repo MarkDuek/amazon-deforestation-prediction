@@ -3,25 +3,23 @@
 import logging
 import os
 import sys
+
 import h5py
 import numpy as np
-
 import torch
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.utils.data_utils import (concatenate_sparse_matrix, get_patch,
-                                  get_time_slice, load_npz_files,
-                                  pad_to_multiple, inspect_h5_file)
+                                  get_time_slice, inspect_h5_file,
+                                  load_npz_files, pad_to_multiple)
 from src.utils.utils import load_config
 
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 
 logger = logging.getLogger(__name__)
@@ -65,9 +63,7 @@ for i in range(total_time_steps):
     # (C, T-1, H, W) - first T-1 time slices
     input_data = torch.tensor(concatenated_data[:, 0, :, :])
     # (1, 1, H, W) - last time step of second channel
-    target = (
-        torch.tensor(concatenated_data[1, -1, :, :]).unsqueeze(0)
-    )
+    target = torch.tensor(concatenated_data[1, -1, :, :]).unsqueeze(0)
 
     input_data = pad_to_multiple(input_data, padding_multiple)
     target = pad_to_multiple(target, padding_multiple)
@@ -82,29 +78,47 @@ for i in range(total_time_steps):
         C, h, w = input_patches_list[0]["tensor"].shape
 
         input_datasets["patches"] = input_h5.create_dataset(
-            "patches", shape=(0, C, h, w), maxshape=(None, C, h, w),
-            chunks=True, dtype="float32"
+            "patches",
+            shape=(0, C, h, w),
+            maxshape=(None, C, h, w),
+            chunks=True,
+            dtype="float32",
         )
         input_datasets["positions"] = input_h5.create_dataset(
-            "positions", shape=(0, 2), maxshape=(None, 2),
-            chunks=True, dtype="int32"
+            "positions",
+            shape=(0, 2),
+            maxshape=(None, 2),
+            chunks=True,
+            dtype="int32",
         )
         input_datasets["time_indices"] = input_h5.create_dataset(
-            "time_indices", shape=(0,), maxshape=(None,),
-            chunks=True, dtype="int32"
+            "time_indices",
+            shape=(0,),
+            maxshape=(None,),
+            chunks=True,
+            dtype="int32",
         )
 
         target_datasets["patches"] = target_h5.create_dataset(
-            "patches", shape=(0, 1, h, w), maxshape=(None, 1, h, w),
-            chunks=True, dtype="float32"
+            "patches",
+            shape=(0, 1, h, w),
+            maxshape=(None, 1, h, w),
+            chunks=True,
+            dtype="float32",
         )
         target_datasets["positions"] = target_h5.create_dataset(
-            "positions", shape=(0, 2), maxshape=(None, 2),
-            chunks=True, dtype="int32"
+            "positions",
+            shape=(0, 2),
+            maxshape=(None, 2),
+            chunks=True,
+            dtype="int32",
         )
         target_datasets["time_indices"] = target_h5.create_dataset(
-            "time_indices", shape=(0,), maxshape=(None,),
-            chunks=True, dtype="int32"
+            "time_indices",
+            shape=(0,),
+            maxshape=(None,),
+            chunks=True,
+            dtype="int32",
         )
 
     # Extract tensors, positions, and time index for input
@@ -128,18 +142,18 @@ for i in range(total_time_steps):
     # Resize input datasets
     for key, array in zip(
         ["patches", "positions", "time_indices"],
-        [input_tensors, input_positions, input_time]
+        [input_tensors, input_positions, input_time],
     ):
         input_datasets[key].resize(total_patches + num_new, axis=0)
-        input_datasets[key][total_patches:total_patches + num_new] = array
+        input_datasets[key][total_patches : total_patches + num_new] = array
 
     # Resize target datasets
     for key, array in zip(
         ["patches", "positions", "time_indices"],
-        [target_tensors, target_positions, target_time]
+        [target_tensors, target_positions, target_time],
     ):
         target_datasets[key].resize(total_patches + num_new, axis=0)
-        target_datasets[key][total_patches:total_patches + num_new] = array
+        target_datasets[key][total_patches : total_patches + num_new] = array
 
     total_patches += num_new
 
