@@ -36,15 +36,10 @@ class AmazonDataset(Dataset):
         self.target_h5 = h5py.File(self.config["h5_paths"]["target"], "r")
 
         self.time_indices = self.input_h5["time_indices"][:]
-        print("time_indices: ", self.time_indices)
         self.num_patches_per_time = np.sum(self.time_indices == 0)
-        print("num_patches_per_time: ", self.num_patches_per_time)
-        print("time_indices shape: ", self.time_indices.shape[0])
-        print("time_slice: ", self.time_slice)
         expected_len = self.num_patches_per_time * (
             self.time_indices[-1] - self.time_slice + 1
         )
-        print("len: ", expected_len)
 
         self.transform = transform
 
