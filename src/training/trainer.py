@@ -51,6 +51,7 @@ class Trainer:
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.device = device
+        self.threshold = config["metrics"]["threshold"]
 
     def _format_time(self, seconds: float) -> str:
         """Format time duration in a human-readable format.
@@ -146,11 +147,14 @@ class Trainer:
                 train_losses.append(train_loss_tensor.item())
 
                 # compute metrics
-                accuracy = Accuracy(task="binary")(train_output, target)
-                precision = Precision(task="binary")(train_output, target)
-                recall = Recall(task="binary")(train_output, target)
-                f1 = F1Score(task="binary")(train_output, target)
-                iou = JaccardIndex(task="binary")(train_output, target)
+                pred = (train_output > self.threshold).int()
+                targ = (target > self.threshold).int()
+
+                accuracy = Accuracy(task="binary")(pred, targ)
+                precision = Precision(task="binary")(pred, targ)
+                recall = Recall(task="binary")(pred, targ)
+                f1 = F1Score(task="binary")(pred, targ)
+                iou = JaccardIndex(task="binary")(pred, targ)
 
                 # Update progress bar with current loss
                 train_pbar.set_postfix(
@@ -194,11 +198,14 @@ class Trainer:
                     val_losses.append(val_loss_tensor.item())
 
                     # compute metrics
-                    accuracy = Accuracy(task="binary")(val_output, target)
-                    precision = Precision(task="binary")(val_output, target)
-                    recall = Recall(task="binary")(val_output, target)
-                    f1 = F1Score(task="binary")(val_output, target)
-                    iou = JaccardIndex(task="binary")(val_output, target)
+                    pred = (val_output > self.threshold).int()
+                    targ = (target > self.threshold).int()
+
+                    accuracy = Accuracy(task="binary")(pred, targ)
+                    precision = Precision(task="binary")(pred, targ)
+                    recall = Recall(task="binary")(pred, targ)
+                    f1 = F1Score(task="binary")(pred, targ)
+                    iou = JaccardIndex(task="binary")(pred, targ)
 
                     # Update progress bar with current loss
                     val_pbar.set_postfix(
@@ -277,8 +284,6 @@ class Trainer:
         self.logger.info("Starting model evaluation...")
         self.model = trained_model
 
-        threshold: float = self.config["metrics"]["threshold"]
-
         # Set model to evaluation mode
         self.model.eval()
         
@@ -304,13 +309,16 @@ class Trainer:
                 # Compute loss
                 loss = self.loss_fn(output, target)
                 total_loss += loss.item()
+
+                # compute metrics
+                pred = (output > self.threshold).int()
+                targ = (target > self.threshold).int()
                 
-                #compute metrics
-                accuracy = Accuracy(task="binary")(output, target)
-                precision = Precision(task="binary")(output, target)
-                recall = Recall(task="binary")(output, target)
-                f1 = F1Score(task="binary")(output, target)
-                iou = JaccardIndex(task="binary")(output, target)
+                accuracy = Accuracy(task="binary")(pred, targ)
+                precision = Precision(task="binary")(pred, targ)
+                recall = Recall(task="binary")(pred, targ)
+                f1 = F1Score(task="binary")(pred, targ)
+                iou = JaccardIndex(task="binary")(pred, targ)
                 
                 # Update progress bar
                 eval_pbar.set_postfix({
