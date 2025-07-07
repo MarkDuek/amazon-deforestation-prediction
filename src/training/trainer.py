@@ -165,11 +165,11 @@ class Trainer:
                 # Update progress bar with current loss
                 train_pbar.set_postfix(
                     {"loss": f"{train_loss_tensor.item():.4f}",
-                     "accuracy": f"{accuracy:.4f}",
-                     "precision": f"{precision:.4f}",
-                     "recall": f"{recall:.4f}",
-                     "f1": f"{f1:.4f}",
-                     "iou": f"{iou:.4f}"}
+                     "accuracy": f"{accuracy.compute():.4f}",
+                     "precision": f"{precision.compute():.4f}",
+                     "recall": f"{recall.compute():.4f}",
+                     "f1": f"{f1.compute():.4f}",
+                     "iou": f"{iou.compute():.4f}"}
                 )
             
             accuracy.reset()
@@ -216,11 +216,11 @@ class Trainer:
                     # Update progress bar with current loss
                     val_pbar.set_postfix(
                         {"loss": f"{val_loss_tensor.item():.4f}",
-                         "accuracy": f"{accuracy:.4f}",
-                         "precision": f"{precision:.4f}",
-                         "recall": f"{recall:.4f}",
-                         "f1": f"{f1:.4f}",
-                         "iou": f"{iou:.4f}"}
+                         "accuracy": f"{accuracy.compute():.4f}",
+                         "precision": f"{precision.compute():.4f}",
+                         "recall": f"{recall.compute():.4f}",
+                         "f1": f"{f1.compute():.4f}",
+                         "iou": f"{iou.compute():.4f}"}
                     )
 
             accuracy.reset()
@@ -334,11 +334,11 @@ class Trainer:
                 # Update progress bar
                 eval_pbar.set_postfix({
                     "loss": f"{loss.item():.4f}",
-                    "accuracy": f"{accuracy:.4f}",
-                    "precision": f"{precision:.4f}",
-                    "recall": f"{recall:.4f}",
-                    "f1": f"{f1:.4f}",
-                    "iou": f"{iou:.4f}"
+                    "accuracy": f"{accuracy.compute():.4f}",
+                    "precision": f"{precision.compute():.4f}",
+                    "recall": f"{recall.compute():.4f}",
+                    "f1": f"{f1.compute():.4f}",
+                    "iou": f"{iou.compute():.4f}"
                 })
                 
                 num_batches += 1
