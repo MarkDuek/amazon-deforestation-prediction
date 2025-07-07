@@ -98,6 +98,12 @@ class Trainer:
         self.model.to(self.device)
         self.logger.info("Model moved to device: %s", self.device)
 
+        accuracy = Accuracy(task="binary").to(self.device)
+        precision = Precision(task="binary").to(self.device)
+        recall = Recall(task="binary").to(self.device)
+        f1 = F1Score(task="binary").to(self.device)
+        iou = JaccardIndex(task="binary").to(self.device)
+
         # record memory history
         if self.config["memory_record"]["enabled"]:
             start_record_memory_history(
@@ -150,11 +156,11 @@ class Trainer:
                 pred = (train_output > self.threshold).int()
                 targ = (target > self.threshold).int()
 
-                accuracy = Accuracy(task="binary")(pred, targ).to(self.device)
-                precision = Precision(task="binary")(pred, targ).to(self.device)
-                recall = Recall(task="binary")(pred, targ).to(self.device)
-                f1 = F1Score(task="binary")(pred, targ).to(self.device)
-                iou = JaccardIndex(task="binary")(pred, targ).to(self.device)
+                accuracy(pred, targ)
+                precision(pred, targ)
+                recall(pred, targ)
+                f1(pred, targ)
+                iou(pred, targ)
 
                 # Update progress bar with current loss
                 train_pbar.set_postfix(
@@ -201,11 +207,11 @@ class Trainer:
                     pred = (val_output > self.threshold).int()
                     targ = (target > self.threshold).int()
 
-                    accuracy = Accuracy(task="binary")(pred, targ).to(self.device)
-                    precision = Precision(task="binary")(pred, targ).to(self.device)
-                    recall = Recall(task="binary")(pred, targ).to(self.device)
-                    f1 = F1Score(task="binary")(pred, targ).to(self.device)
-                    iou = JaccardIndex(task="binary")(pred, targ).to(self.device)
+                    accuracy(pred, targ)
+                    precision(pred, targ)
+                    recall(pred, targ)
+                    f1(pred, targ)
+                    iou(pred, targ)
 
                     # Update progress bar with current loss
                     val_pbar.set_postfix(
@@ -297,6 +303,12 @@ class Trainer:
             leave=False,
         )
         
+        accuracy = Accuracy(task="binary").to(self.device)
+        precision = Precision(task="binary").to(self.device)
+        recall = Recall(task="binary").to(self.device)
+        f1 = F1Score(task="binary").to(self.device)
+        iou = JaccardIndex(task="binary").to(self.device)
+
         with torch.no_grad():
             for data, target in eval_pbar:
                 # Move data to device
@@ -313,11 +325,11 @@ class Trainer:
                 pred = (output > self.threshold).int()
                 targ = (target > self.threshold).int()
                 
-                accuracy = Accuracy(task="binary")(pred, targ).to(self.device)
-                precision = Precision(task="binary")(pred, targ).to(self.device)
-                recall = Recall(task="binary")(pred, targ).to(self.device)
-                f1 = F1Score(task="binary")(pred, targ).to(self.device)
-                iou = JaccardIndex(task="binary")(pred, targ).to(self.device)
+                accuracy(pred, targ)
+                precision(pred, targ)
+                recall(pred, targ)
+                f1(pred, targ)
+                iou(pred, targ)
                 
                 # Update progress bar
                 eval_pbar.set_postfix({
