@@ -22,6 +22,23 @@ from src.utils.utils import get_device, load_config, parse_args
 from src.utils.training_utils import plot_training_curves
 
 
+def valid_pixels(loader: DataLoader) -> float:
+    """Compute the number of valid pixels in the target tensor.
+
+    Args:
+        target: Target tensor of shape (batch_size, ...).
+
+    Returns:
+        Number of valid pixels in the target tensor.
+    """
+    valid_pixels = 0
+    for batch in loader:
+        target = batch[1]
+        valid_pixels += (target > 0.0).float().sum().item()
+    
+    return valid_pixels / len(loader)
+
+
 def main():
     """Main function to run the Amazon deforestation
     prediction training pipeline."""
@@ -72,6 +89,10 @@ def main():
         persistent_workers=True,  # Keep workers alive between epochs
         prefetch_factor=2,  # Prefetch batches
     )
+
+    # compute valid pixels
+    avg_valid_pixels = valid_pixels(train_loader)
+    logger.info("Average valid pixels: %s", avg_valid_pixels)
 
     # define model
     # model = DeepLabV3(config)
