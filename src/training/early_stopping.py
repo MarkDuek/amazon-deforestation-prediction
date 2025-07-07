@@ -1,7 +1,7 @@
 """Early stopping implementation for training."""
 
 import logging
-from typing import Callable
+from typing import Any, Callable, Dict
 
 import torch
 
@@ -19,8 +19,8 @@ class EarlyStopping:
         patience: int = 10,
         verbose: bool = True,
         delta: float = 0.001,
-        path: str = "checkpoint.pt",
         trace_func: Callable = logging.info,
+        config: Dict[str, Any] = None,
     ):
         """Initialize early stopping.
 
@@ -37,9 +37,9 @@ class EarlyStopping:
         self.best_loss = float("inf")
         self.counter = 0
         self.early_stop = False
-        self.path = path
         self.verbose = verbose
         self.trace_func = trace_func
+        self.path = config["save_paths"]["early_stopping"]
 
     def __call__(self, val_loss, model):
         """Check if early stopping criteria are met.
