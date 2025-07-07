@@ -12,11 +12,14 @@ from torch.utils.data import DataLoader, random_split
 from torchinfo import summary
 
 from src.data.amazon_dataset import AmazonDataset
-from src.models.deep_lab_v3.model import DeepLabV3
+# from src.models.deep_lab_v3.model import DeepLabV3
+from src.loss.weightedBCE import WeightedBCEWithLogitsLoss
+from src.models.simple_cnn.simple_cnn import SimpleCNNWithResiduals
 # from src.models.dummy.model import DummyModel
 from src.training.trainer import Trainer
 from src.utils.data_utils import inspect_h5_file
 from src.utils.utils import get_device, load_config, parse_args
+from src.utils.training_utils import plot_training_curves
 
 
 def main():
@@ -71,10 +74,12 @@ def main():
     )
 
     # define model
-    model = DeepLabV3(config)
+    # model = DeepLabV3(config)
     # model = DummyModel(config)
+    model = SimpleCNNWithResiduals()
+
     logger.info("Model summary:")
-    summary(model, input_size=(5, 7, 16, 16))
+    summary(model, input_size=(2, 5, 7, 256, 256))
 
     # define optimizer
     optimizer = torch.optim.Adam(
@@ -83,7 +88,7 @@ def main():
     logger.info("Optimizer summary: %s", optimizer)
 
     # define loss function
-    loss_fn = torch.nn.BCEWithLogitsLoss()
+    loss_fn = WeightedBCEWithLogitsLoss(config)
     logger.info("Loss function summary: %s", loss_fn)
 
     # define trainer
@@ -93,8 +98,42 @@ def main():
 
     # start training
     logger.info("%s Starting training %s", 16 * "=", 16 * "=")
-    trainer.train()
+    trained_model, train_losses, val_losses = trainer.train()
     logger.info("%s Training completed %s", 16 * "=", 16 * "=")
+
+    # Plot training curves
+    plot_training_curves(
+        train_losses, val_losses, config["save_paths"]["plot"]
+    )
+
+    # # Save training history
+    # training_history = {}
+    # if "save_paths" in config and "history" in config["save_paths"]:
+    #     training_history = save_training_history(
+    #         train_losses, val_losses, config, config["save_paths"]["history"]
+    #     )
+
+    # evaluate model
+    logger.info("%s Starting evaluation %s", 16 * "=", 16 * "=")
+    
+    # Evaluate on validation set
+    _ = trainer.evaluate(trained_model, val_loader)
+    logger.info("Validation set evaluation completed.")
+    
+    # # Optionally evaluate on training set for comparison
+    # train_metrics = trainer.evaluate(train_loader)
+    # logger.info("Training set evaluation completed.")
+    
+    # Save evaluation results
+    # save_evaluation_results(
+    #     val_metrics, train_metrics, training_history, 
+    #     config["save_paths"]["results"]
+    # )
+    
+    # Log comprehensive training summary
+    # log_training_summary(train_losses, val_losses, val_metrics, train_metrics)
+    
+    logger.info("%s Evaluation completed %s", 16 * "=", 16 * "=")
 
 
 if __name__ == "__main__":
