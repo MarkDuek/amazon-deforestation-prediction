@@ -46,7 +46,6 @@ class DeepLabV3(nn.Module):
             x = x.unsqueeze(0)  # Add batch dimension: (1, C, T, H, W)
             self.logger.debug("Added batch dimension, new shape: %s", x.shape)
 
-        # x = einops.rearrange(x, "b c t h w -> b t c h w")
         self.logger.debug("Model received tensor with shape: %s", x.shape)
 
         _, _, time_frames, _, _ = x.shape  # (B, C, T, H, W)
