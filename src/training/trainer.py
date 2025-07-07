@@ -305,6 +305,7 @@ class Trainer:
 
     def evaluate(
         self, 
+        trained_model: torch.nn.Module,
         data_loader: torch.utils.data.DataLoader,
     ) -> Dict[str, float]:
         """Evaluate the model on the given data loader.
@@ -317,6 +318,7 @@ class Trainer:
             Dictionary containing evaluation metrics
         """
         self.logger.info("Starting model evaluation...")
+        self.model = trained_model
 
         threshold: float = self.config["metrics"]["threshold"]
 
