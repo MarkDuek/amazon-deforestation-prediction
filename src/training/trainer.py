@@ -150,11 +150,11 @@ class Trainer:
                 pred = (train_output > self.threshold).int()
                 targ = (target > self.threshold).int()
 
-                accuracy = Accuracy(task="binary")(pred, targ)
-                precision = Precision(task="binary")(pred, targ)
-                recall = Recall(task="binary")(pred, targ)
-                f1 = F1Score(task="binary")(pred, targ)
-                iou = JaccardIndex(task="binary")(pred, targ)
+                accuracy = Accuracy(task="binary")(pred, targ).to(self.device)
+                precision = Precision(task="binary")(pred, targ).to(self.device)
+                recall = Recall(task="binary")(pred, targ).to(self.device)
+                f1 = F1Score(task="binary")(pred, targ).to(self.device)
+                iou = JaccardIndex(task="binary")(pred, targ).to(self.device)
 
                 # Update progress bar with current loss
                 train_pbar.set_postfix(
@@ -201,11 +201,11 @@ class Trainer:
                     pred = (val_output > self.threshold).int()
                     targ = (target > self.threshold).int()
 
-                    accuracy = Accuracy(task="binary")(pred, targ)
-                    precision = Precision(task="binary")(pred, targ)
-                    recall = Recall(task="binary")(pred, targ)
-                    f1 = F1Score(task="binary")(pred, targ)
-                    iou = JaccardIndex(task="binary")(pred, targ)
+                    accuracy = Accuracy(task="binary")(pred, targ).to(self.device)
+                    precision = Precision(task="binary")(pred, targ).to(self.device)
+                    recall = Recall(task="binary")(pred, targ).to(self.device)
+                    f1 = F1Score(task="binary")(pred, targ).to(self.device)
+                    iou = JaccardIndex(task="binary")(pred, targ).to(self.device)
 
                     # Update progress bar with current loss
                     val_pbar.set_postfix(
@@ -276,7 +276,6 @@ class Trainer:
 
         Args:
             data_loader: Data loader for evaluation
-            threshold: Threshold for binary classification
 
         Returns:
             Dictionary containing evaluation metrics
@@ -314,11 +313,11 @@ class Trainer:
                 pred = (output > self.threshold).int()
                 targ = (target > self.threshold).int()
                 
-                accuracy = Accuracy(task="binary")(pred, targ)
-                precision = Precision(task="binary")(pred, targ)
-                recall = Recall(task="binary")(pred, targ)
-                f1 = F1Score(task="binary")(pred, targ)
-                iou = JaccardIndex(task="binary")(pred, targ)
+                accuracy = Accuracy(task="binary")(pred, targ).to(self.device)
+                precision = Precision(task="binary")(pred, targ).to(self.device)
+                recall = Recall(task="binary")(pred, targ).to(self.device)
+                f1 = F1Score(task="binary")(pred, targ).to(self.device)
+                iou = JaccardIndex(task="binary")(pred, targ).to(self.device)
                 
                 # Update progress bar
                 eval_pbar.set_postfix({
