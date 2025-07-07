@@ -21,7 +21,6 @@ training:
 early_stopping:
   patience: 10
   delta: 0.001
-  path: "checkpoints/checkpoint.pt"
   verbose: true
 model:
   deep_lab_v3:
@@ -35,3 +34,12 @@ memory_record:
 loss:
   weight: 5.0
   invalid_weight: 0.01
+metrics:
+  threshold: 0.5
+# Output file paths
+save_paths:
+  early_stopping: "checkpoints/early_stopping.pt"
+  model: "checkpoints/trained_model.pth"
+  plot: "plots/training_curves.png"
+  history: "results/training_history.json"
+  results: "results/evaluation_results.json"
