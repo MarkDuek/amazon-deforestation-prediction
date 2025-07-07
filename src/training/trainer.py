@@ -5,6 +5,7 @@ import time
 from typing import Any, Dict, List, Tuple
 from torchmetrics import Accuracy, Precision, Recall, F1Score, JaccardIndex
 
+import h5py
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -265,7 +266,10 @@ class Trainer:
                 break
 
             # save model
-            torch.save(self.model.state_dict(), self.config["save_paths"]["model"])
+            torch.save(
+                self.model.state_dict(), 
+                self.config["save_paths"]["model"]
+            )
 
         if self.config["memory_record"]["enabled"]:
             export_memory_snapshot(self.logger)
@@ -294,6 +298,11 @@ class Trainer:
         
         total_loss = 0.0
         num_batches = 0
+        
+        # Lists to collect predictions and targets for saving
+        all_predictions = []
+        all_binary_predictions = []
+        all_targets = []
         
         # Progress bar for evaluation
         eval_pbar = tqdm(
@@ -325,6 +334,11 @@ class Trainer:
                 pred = (output > self.threshold).int()
                 targ = (target > self.threshold).int()
                 
+                # Collect predictions and targets for saving
+                all_predictions.append(output.cpu().numpy())
+                all_binary_predictions.append(pred.cpu().numpy())
+                all_targets.append(target.cpu().numpy())
+                
                 accuracy(pred, targ)
                 precision(pred, targ)
                 recall(pred, targ)
@@ -350,7 +364,35 @@ class Trainer:
         avg_metrics["recall"] = recall.compute()
         avg_metrics["f1"] = f1.compute()
         avg_metrics["iou"] = iou.compute()
-        avg_metrics["avg_loss"] = total_loss / num_batches if num_batches > 0 else 0.0
+        avg_metrics["avg_loss"] = (
+            total_loss / num_batches if num_batches > 0 else 0.0
+        )
+        
+        # Save predictions to h5 file
+        predictions_path = self.config["save_paths"]["predictions"]
+        self.logger.info("Saving predictions to %s", predictions_path)
+        
+        # Convert lists to numpy arrays
+        predictions_array = np.concatenate(all_predictions, axis=0)
+        binary_predictions_array = np.concatenate(
+            all_binary_predictions, axis=0
+        )
+        targets_array = np.concatenate(all_targets, axis=0)
+        
+        # Save to h5 file
+        with h5py.File(predictions_path, 'w') as f:
+            f.create_dataset('predictions', data=predictions_array)
+            f.create_dataset(
+                'binary_predictions', data=binary_predictions_array
+            )
+            f.create_dataset('targets', data=targets_array)
+            
+            # Save metadata
+            f.attrs['threshold'] = self.threshold
+            f.attrs['num_batches'] = num_batches
+            f.attrs['total_samples'] = len(predictions_array)
+        
+        self.logger.info("Predictions saved successfully!")
         
         # Log results
         self.logger.info("Evaluation Results:")

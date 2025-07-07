@@ -43,3 +43,4 @@ save_paths:
   plot: "plots/training_curves.png"
   history: "results/training_history.json"
   results: "results/evaluation_results.json"
+  predictions: "results/predictions.h5"
