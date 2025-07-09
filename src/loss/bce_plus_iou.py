@@ -8,7 +8,7 @@ class WeightedBCEWithLogitsAndIoULoss(torch.nn.Module):
         self.weight = config["loss"]["weight"]
         self.invalid_weight = config["loss"]["invalid_weight"]
         self.pos_weight = config["loss"].get("pos_weight", None)
-        self.soft_iou_weight = config["loss"].get("soft_iou_weight", 1.0)
+        self.beta = config["loss"].get("beta", 0.5)
 
         self.soft_iou = SoftIoULoss()
 
@@ -28,4 +28,4 @@ class WeightedBCEWithLogitsAndIoULoss(torch.nn.Module):
 
         iou_loss = self.soft_iou(input, target)
 
-        return bce_loss + self.soft_iou_weight * iou_loss
+        return (1 - self.beta) * bce_loss + self.beta * iou_loss

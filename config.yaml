@@ -35,7 +35,7 @@ loss:
   weight: 5.0
   invalid_weight: 0.01
   pos_weight: 1.0
-  soft_iou_weight: 1.0
+  beta: 0.8
 metrics:
   threshold: 0.5
 # Output file paths
