@@ -34,6 +34,28 @@ data = load_npz_files(data_paths)
 
 total_time_steps = len(data[0].keys())
 
+logger.info("Computing per-channel normalization stats")
+C = len(data_paths)
+channel_sums = torch.zeros(C)
+channel_sq_sums = torch.zeros(C)
+pixel_counts = 0
+
+for i in range(total_time_steps):
+    time_slice_data = get_time_slice(data, i, 1)
+    concatenated_data = concatenate_sparse_matrix(time_slice_data)
+    input_data = torch.tensor(concatenated_data[:, 0, :, :]).float()
+
+    channel_sums += input_data.sum(dim=(1, 2))
+    channel_sq_sums += (input_data ** 2).sum(dim=(1, 2))
+    pixel_counts += input_data.shape[1] * input_data.shape[2]
+
+channel_means = channel_sums / pixel_counts
+channel_stds = (channel_sq_sums / pixel_counts - channel_means ** 2).sqrt()
+
+logger.info(f"Channel means: {channel_means}")
+logger.info(f"Channel stds: {channel_stds}")
+
+
 # Output files
 input_h5 = h5py.File("src/data/patches/input_patches.h5", "w")
 target_h5 = h5py.File("src/data/patches/target_patches.h5", "w")
@@ -61,9 +83,13 @@ for i in range(total_time_steps):
     concatenated_data = concatenate_sparse_matrix(time_slice_data)
 
     # (C, T-1, H, W) - first T-1 time slices
-    input_data = torch.tensor(concatenated_data[:, 0, :, :])
+    input_data = torch.tensor(concatenated_data[:, 0, :, :]).float()
+
+    for c in range(C):
+        input_data[c] = (input_data[c] - channel_means[c]) / channel_stds[c]
+
     # (1, 1, H, W) - last time step of second channel
-    target = torch.tensor(concatenated_data[1, -1, :, :]).unsqueeze(0)
+    target = torch.tensor(concatenated_data[1, -1, :, :]).unsqueeze(0).float()
 
     input_data = pad_to_multiple(input_data, padding_multiple)
     target = pad_to_multiple(target, padding_multiple)
