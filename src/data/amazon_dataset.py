@@ -1,7 +1,7 @@
 """Amazon deforestation dataset implementation for PyTorch."""
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import h5py
 import numpy as np
@@ -33,21 +33,19 @@ class AmazonDataset(Dataset):
         )
 
         self.input_h5 = h5py.File(self.config["h5_paths"]["input"], "r")
-        self.target_h5 = h5py.File(self.config["h5_paths"]["target"], "r")
+        # self.target_h5 = h5py.File(self.config["h5_paths"]["target"], "r")
 
         self.time_indices = self.input_h5["time_indices"][:]
         self.num_patches_per_time = np.sum(self.time_indices == 0)
-        expected_len = self.num_patches_per_time * (
-            self.time_indices[-1] - self.time_slice + 1
-        )
+
+        self.valid_indices = []
+        self.__find_valid_indices()
 
         self.transform = transform
 
     def __len__(self) -> int:
         """Return the total number of samples in the dataset."""
-        return self.num_patches_per_time * (
-            self.time_indices[-1] - self.time_slice + 1
-        )
+        return len(self.valid_indices)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get a single sample from the dataset.
@@ -58,10 +56,12 @@ class AmazonDataset(Dataset):
         Returns:
             Tuple of (input_data, target) tensors
         """
+        base_idx = self.valid_indices[idx]
+
 
         # Compute sequence indices
         seq_indices = [
-            idx + i * self.num_patches_per_time for i in range(self.time_slice)
+            base_idx + i * self.num_patches_per_time for i in range(self.time_slice)
         ]
 
         # Check bounds against actual HDF5 dataset size
@@ -92,3 +92,25 @@ class AmazonDataset(Dataset):
             target_tensor = self.transform(target_tensor)
 
         return input_tensor, target_tensor
+
+    def __find_valid_indices(self) -> None:
+        """Get valid indices for the dataset."""
+        max_time_index = self.time_indices[-1]
+        max_idx = self.num_patches_per_time * (max_time_index - self.time_slice + 1)
+
+        for idx in range(max_idx):
+            seq_indices = [idx + i * self.num_patches_per_time for i in range(self.time_slice)]
+            target_idx = seq_indices[-1]
+            if target_idx >= self.input_h5["patches"].shape[0]:
+                continue
+
+            # Channel 1 is assumed to be the target mask
+            target = self.input_h5["patches"][target_idx][1]
+            if np.any(target > 0):
+                self.valid_indices.append(idx)
+
+        self.logger.info(
+            "Filtered dataset: %d/%d valid sequences found.",
+            len(self.valid_indices),
+            max_idx,
+        )
