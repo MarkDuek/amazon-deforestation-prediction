@@ -51,6 +51,7 @@ for i in range(total_time_steps):
 
 channel_means = channel_sums / pixel_counts
 channel_stds = (channel_sq_sums / pixel_counts - channel_means ** 2).sqrt()
+channel_stds = channel_stds.clamp(min=1e-2)
 
 logger.info(f"Channel means: {channel_means}")
 logger.info(f"Channel stds: {channel_stds}")
@@ -67,6 +68,8 @@ target_h5 = h5py.File("src/data/patches/target_patches.h5", "w")
 input_datasets = {}
 target_datasets = {}
 total_patches = 0
+
+eps = 1e-6
 
 C = len(data_paths)
 h, w = patch_size, patch_size
@@ -85,8 +88,15 @@ for i in range(total_time_steps):
     # (C, T-1, H, W) - first T-1 time slices
     input_data = torch.tensor(concatenated_data[:, 0, :, :]).float()
 
-    for c in range(C):
-        input_data[c] = (input_data[c] - channel_means[c]) / channel_stds[c]
+    # for c in range(C):
+    #     if channel_stds[c] < 1e-3:
+    #         logger.warning(f"Skipping normalization for channel {c} due to low std: {channel_stds[c]:.6f}")
+    #     input_data[c] = (input_data[c] - channel_means[c]) / channel_stds[c].clamp(min=eps)
+
+    c = 2
+    input_data[c] = (input_data[c] - channel_means[c]) / channel_stds[c].clamp(min=eps)
+
+    input_data = input_data.clamp(min=-5.0, max=5.0)
 
     # (1, 1, H, W) - last time step of second channel
     target = torch.tensor(concatenated_data[1, -1, :, :]).unsqueeze(0).float()

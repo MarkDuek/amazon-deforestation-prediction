@@ -1,6 +1,10 @@
+/venv
 /data
-/src/data/patches
+/checkpoints
+/results
+/plots
 /memory_records
+/src/data/patches
 __pycache__/
 .idea/
 .coverage

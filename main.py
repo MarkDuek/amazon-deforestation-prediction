@@ -14,7 +14,9 @@ from torchinfo import summary
 from src.data.amazon_dataset import AmazonDataset
 # from src.models.deep_lab_v3.model import DeepLabV3
 from src.loss.weightedBCE import WeightedBCEWithLogitsLoss
-from src.models.simple_cnn.simple_cnn import SimpleCNNWithResiduals
+from src.loss.bce_plus_iou import WeightedBCEWithLogitsAndIoULoss
+from src.models.simple_cnn.model import Tiny3DUNet
+from src.models.simple_cnn.baseline import SimpleBaselineB
 # from src.models.dummy.model import DummyModel
 from src.training.trainer import Trainer
 from src.utils.data_utils import inspect_h5_file
@@ -58,6 +60,15 @@ def main():
     inspect_h5_file(config["data"]["h5_paths"]["input"])
     inspect_h5_file(config["data"]["h5_paths"]["target"])
 
+    # define model
+    # model = DeepLabV3(config)
+    # model = DummyModel(config)
+    # model = SimpleBaselineB(5, 6)
+    model = Tiny3DUNet()
+
+    logger.info("Model summary:")
+    summary(model, input_size=(2, 5, 7, 32, 32))
+
     # load dataset
     amazon_dataset = AmazonDataset(config)
     logger.info("Dataset input shape: %s", amazon_dataset[0][0].shape)
@@ -67,6 +78,31 @@ def main():
     train_data, val_data = random_split(
         amazon_dataset, [(1 - val_ratio), val_ratio]
     )
+
+    # Before creating your DataLoader:
+    # labels = []
+    # for idx in range(len(train_data)):
+    #     _, mask = train_data[idx]
+    #     labels.append(int(mask.sum() > 0))  # 1 if any positives, else 0
+
+    # # Compute class weights: rarer class gets higher weight
+    # neg_count = labels.count(0)
+    # pos_count = labels.count(1)
+
+    # if neg_count == 0 or pos_count == 0:
+    #     raise ValueError(
+    #         f"Training split contains only one class "
+    #         f"(neg_count={neg_count}, pos_count={pos_count}). "
+    #         "Try a smaller val_ratio or stratified splitting."
+    #     )
+    
+    # class_weights = [1.0 / neg_count, 1.0 / pos_count]
+
+    # # Make a weight for each sample
+    # sample_weights = [class_weights[label] for label in labels]
+
+    # from torch.utils.data import WeightedRandomSampler
+    # sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
 
     # create dataloaders
     logger.info("Creating Train loader")
@@ -91,25 +127,18 @@ def main():
     )
 
     # compute valid pixels
-    avg_valid_pixels = valid_pixels(train_loader)
-    logger.info("Average valid pixels: %s", avg_valid_pixels)
+    # avg_valid_pixels = valid_pixels(train_loader)
+    # logger.info("Average valid pixels: %s", avg_valid_pixels)
 
-    # define model
-    # model = DeepLabV3(config)
-    # model = DummyModel(config)
-    model = SimpleCNNWithResiduals()
-
-    logger.info("Model summary:")
-    summary(model, input_size=(2, 5, 7, 256, 256))
 
     # define optimizer
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config["training"]["learning_rate"]
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=config["training"]["learning_rate"], weight_decay=config["training"]["weight_decay"]
     )
     logger.info("Optimizer summary: %s", optimizer)
 
     # define loss function
-    loss_fn = WeightedBCEWithLogitsLoss(config)
+    loss_fn = WeightedBCEWithLogitsAndIoULoss(config)
     logger.info("Loss function summary: %s", loss_fn)
 
     # define trainer

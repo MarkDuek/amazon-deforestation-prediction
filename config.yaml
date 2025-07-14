@@ -2,9 +2,9 @@ seed: 42
 device: cuda
 data:
   time_slice: 7
-  patch_size: 256
+  patch_size: 32
   val_ratio: 0.2
-  padding_multiple: 128
+  padding_multiple: 42
   h5_paths:
     input: "src/data/patches/input_patches.h5"
     target: "src/data/patches/target_patches.h5"
@@ -15,9 +15,10 @@ data:
    - 'data/amazon-1km/DTCB_diff_area.npz'
    - 'data/amazon-1km/DTCB_seasonality_factor.npz'
 training:
-  batch_size: 8
-  epochs: 1
-  learning_rate: 0.001
+  batch_size: 2048
+  epochs: 10
+  learning_rate: 0.0001
+  weight_decay: 0.001
 early_stopping:
   patience: 10
   delta: 0.001
@@ -32,17 +33,16 @@ memory_record:
   enabled: false
   num_events: 100000
 loss:
-  weight: 5.0
-  invalid_weight: 0.01
   pos_weight: 1.0
-  beta: 0.8
+  beta: 0.5
+  weight: 2.0
+  invalid_weight: 1.0
 metrics:
   threshold: 0.5
-# Output file paths
 save_paths:
   early_stopping: "checkpoints/early_stopping.pt"
   model: "checkpoints/trained_model.pth"
   plot: "plots/training_curves.png"
   history: "results/training_history.json"
   results: "results/evaluation_results.json"
-  predictions: "results/predictions_3.h5"
+  predictions: "results/predictions.h5"

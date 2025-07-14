@@ -30,7 +30,7 @@ def plot_training_curves(
         plt.figure(figsize=(12, 4))
         
         # Plot losses
-        plt.subplot(1, 2, 1)
+        # plt.subplot(1, 2, 1)
         plt.plot(train_losses, label='Training Loss')
         plt.plot(val_losses, label='Validation Loss')
         plt.title('Training and Validation Loss')
@@ -39,15 +39,15 @@ def plot_training_curves(
         plt.legend()
         plt.grid(True)
         
-        # Plot loss difference (overfitting indicator)
-        plt.subplot(1, 2, 2)
-        loss_diff = [t - v for t, v in zip(train_losses, val_losses)]
-        plt.plot(loss_diff, label='Train - Val Loss')
-        plt.title('Loss Difference (Overfitting Indicator)')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss Difference')
-        plt.legend()
-        plt.grid(True)
+        # # Plot loss difference (overfitting indicator)
+        # plt.subplot(1, 2, 2)
+        # loss_diff = [t - v for t, v in zip(train_losses, val_losses)]
+        # plt.plot(loss_diff, label='Train - Val Loss')
+        # plt.title('Loss Difference (Overfitting Indicator)')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss Difference')
+        # plt.legend()
+        # plt.grid(True)
         
         plt.tight_layout()
         plt.savefig(save_path)

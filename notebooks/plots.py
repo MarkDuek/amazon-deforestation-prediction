@@ -172,11 +172,11 @@ def plot_top_patches(predictions, binary_predictions, targets,
         axes[row, 2].axis('off')
         plt.colorbar(im3, ax=axes[row, 2], fraction=0.046, pad=0.04)
         
-        # Add patch info as text
-        patch_info = (f"Patch {patch_idx}: Deforestation Area = "
-                      f"{deforestation_area:.0f}, Accuracy = {accuracy:.3f}")
-        fig.text(0.02, 0.95 - i*0.23, patch_info, fontsize=10,
-                 fontweight='bold')
+        # # Add patch info as text
+        # patch_info = (f"Patch {patch_idx}: Deforestation Area = "
+        #               f"{deforestation_area:.0f}, Accuracy = {accuracy:.3f}")
+        # fig.text(0.02, 0.95 - i*0.23, patch_info, fontsize=10,
+        #          fontweight='bold')
     
     plt.tight_layout()
     plt.subplots_adjust(top=0.95)
@@ -186,7 +186,7 @@ def plot_top_patches(predictions, binary_predictions, targets,
 def main():
     """Main function to load predictions and plot sorted patches."""
     # Path to predictions file
-    predictions_path = "../results/predictions_SCNN2.h5"
+    predictions_path = "../results/predictions.h5"
     
     try:
         # Load predictions

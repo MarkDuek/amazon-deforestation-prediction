@@ -85,6 +85,10 @@ class AmazonDataset(Dataset):
         input_tensor = input_tensor.transpose(0, 1)  # (C, time_slice-1, H, W)
 
         target_tensor = sequence_tensor[-1, 1, :, :].unsqueeze(0).unsqueeze(0)
+        target_tensor = (target_tensor > 0.0).to(dtype=torch.float32)
+        # pos_ratio = (target_tensor > 0.5).float().mean().item()
+        # print(f"Positive pixel ratio: {pos_ratio:.4f}")
+
 
         if self.transform:
             # (C, time_slice-1, H, W)

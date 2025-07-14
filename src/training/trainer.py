@@ -48,6 +48,7 @@ class Trainer:
         self.config = config
         self.model = model
         self.train_loader = train_loader
+        # self.batch = next(iter(train_loader))
         self.val_loader = val_loader
         self.optimizer = optimizer
         self.loss_fn = loss_fn
@@ -114,6 +115,9 @@ class Trainer:
         # Training start time
         training_start_time = time.time()
 
+
+        # data, target = self.batch
+
         for epoch in range(epochs):
             epoch_start_time = time.time()
             self.logger.info(
@@ -135,13 +139,22 @@ class Trainer:
             )
 
             for data, target in train_pbar:
+            # for step in range(1000):
                 # move data to device
                 data, target = data.to(self.device), target.to(self.device)
+
+                # print("------------")
+                # print("target unique values", torch.unique(target))
+                # print("------------")
 
                 # zero gradients
                 self.optimizer.zero_grad()
                 # forward pass
                 train_output: torch.Tensor = self.model(data)
+                
+                # print("Input (logits) min/max:", data.min().item(), data.max().item())
+                # print("Target min/max:", target.min().item(), target.max().item())
+
                 # compute loss
                 train_loss_tensor: torch.Tensor = self.loss_fn(
                     train_output, target
@@ -172,6 +185,9 @@ class Trainer:
                      "f1": f"{f1.compute():.4f}",
                      "iou": f"{iou.compute():.4f}"}
                 )
+
+                # if step%50 == 0:
+                #     print(f"step {step}, loss {train_loss_tensor.item()}")
             
             accuracy.reset()
             precision.reset()

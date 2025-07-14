@@ -62,7 +62,7 @@ class WeightedBCEWithLogitsLoss(torch.nn.Module):
 
         # compute loss
         loss = torch.nn.functional.binary_cross_entropy_with_logits(
-            input, target, weight=weights
+            input, target, weight=weights, pos_weight= torch.tensor(100, device=input.device, dtype=input.dtype)
         )
 
         return loss
